@@ -1,0 +1,28 @@
+<Window x:Class="MediaManager.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:MediaManager.UI.ViewModels"
+        Title="媒体管理器" Height="720" Width="1280" MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen">
+
+    <!-- 主布局：左侧导航 + 右侧内容区 -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 左侧导航栏 -->
+        <StackPanel Grid.Column="0" Style="{StaticResource NavPanelStyle}">
+            <Button Content="媒体库" Command="{Binding NavigateToLibraryCommand}"/>
+            <Button Content="扫描导入" Command="{Binding NavigateToScanCommand}"/>
+            <Button Content="搜索" Command="{Binding NavigateToSearchCommand}"/>
+            <Button Content="播放列表" Command="{Binding NavigateToPlaylistCommand}"/>
+            <Button Content="重复文件" Command="{Binding NavigateToDuplicateCommand}"/>
+            <Button Content="设置" Command="{Binding NavigateToSettingsCommand}"/>
+        </StackPanel>
+
+        <!-- 右侧内容区（Frame 导航） -->
+        <Frame Grid.Column="1" x:Name="ContentFrame" NavigationUIVisibility="Hidden"/>
+    </Grid>
+</Window>

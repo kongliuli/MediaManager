@@ -1,0 +1,37 @@
+using MediaManager.UI.ViewModels;
+using MediaManager.UI.Views;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace MediaManager.UI.Extensions;
+
+/// <summary>
+/// UI 层服务注册扩展。
+/// 注册所有 ViewModel 和 View（Transient，每次导航创建新实例）。
+/// </summary>
+public static class UIServiceExtensions
+{
+    public static IServiceCollection AddUIServices(this IServiceCollection services)
+    {
+        // ViewModels
+        services.AddSingleton<MainViewModel>();
+        services.AddTransient<LibraryViewModel>();
+        services.AddTransient<ScanViewModel>();
+        services.AddTransient<SearchViewModel>();
+        services.AddTransient<DetailViewModel>();
+        services.AddTransient<PlaylistViewModel>();
+        services.AddTransient<DuplicateViewModel>();
+        services.AddTransient<SettingsViewModel>();
+
+        // Views
+        services.AddTransient<MainWindow>();
+        services.AddTransient<LibraryView>();
+        services.AddTransient<ScanView>();
+        services.AddTransient<SearchView>();
+        services.AddTransient<DetailView>();
+        services.AddTransient<PlaylistView>();
+        services.AddTransient<DuplicateView>();
+        services.AddTransient<SettingsView>();
+
+        return services;
+    }
+}
