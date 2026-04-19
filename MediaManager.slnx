@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MediaManager.Core/MediaManager.Core.csproj" />
+    <Project Path="src/MediaManager.Data/MediaManager.Data.csproj" />
+    <Project Path="src/MediaManager.Services/MediaManager.Services.csproj" />
+    <Project Path="src/MediaManager.UI/MediaManager.UI.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,155 @@
+<UserControl x:Class="MediaManager.UI.Views.LibraryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:conv="clr-namespace:MediaManager.UI.Converters"
+             xmlns:vm="clr-namespace:MediaManager.UI.ViewModels">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:MediaTypeIconConverter x:Key="TypeIcon"/>
+        <conv:FileSizeConverter x:Key="FileSize"/>
+        <conv:DurationConverter x:Key="Duration"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 工具栏 -->
+        <Border Grid.Row="0" Padding="16,12" Background="{StaticResource NavBackground}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <hc:SearchBar Grid.Column="0" MaxWidth="360" HorizontalAlignment="Left"
+                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                              hc:InfoElement.Placeholder="搜索文件名..."/>
+
+                <ComboBox Grid.Column="1" Margin="12,0" Width="120"
+                          SelectedValue="{Binding SortBy}"
+                          SelectedValuePath="Tag">
+                    <ComboBoxItem Content="添加时间" Tag="DateAdded" IsSelected="True"/>
+                    <ComboBoxItem Content="文件名" Tag="FileName"/>
+                    <ComboBoxItem Content="时长" Tag="Duration"/>
+                    <ComboBoxItem Content="大小" Tag="FileSize"/>
+                </ComboBox>
+
+                <Button Grid.Column="2" Style="{StaticResource ButtonPrimary}"
+                        Content="刷新" Command="{Binding LoadCommand}"/>
+            </Grid>
+        </Border>
+
+        <!-- 加载指示器 -->
+        <hc:LoadingCircle Grid.Row="1" IsRunning="{Binding IsLoading}"
+                          Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+        <!-- 媒体卡片网格 -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}">
+            <ItemsControl ItemsSource="{Binding GroupedItems}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <hc:Card Margin="8,4" Background="{StaticResource CardBackground}">
+                            <!-- 分组标题 -->
+                            <Expander IsExpanded="{Binding IsExpanded}" 
+                                      Background="Transparent"
+                                      BorderThickness="0">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal" Margin="8,4">
+                                        <TextBlock Text="{Binding MediaType, Converter={StaticResource TypeIcon}, FallbackValue=&#xE187;}"
+                                                   FontFamily="Segoe MDL2 Assets" FontSize="16" 
+                                                   Foreground="{DynamicResource PrimaryBrush}" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding GroupName}" FontSize="14" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource PrimaryTextBrush}"/>
+                                        <hc:Badge Content="{Binding ItemCount}" Margin="8,0,0,0" 
+                                                   Background="{DynamicResource PrimaryBrush}"/>
+                                    </StackPanel>
+                                </Expander.Header>
+                                
+                                <!-- 分组内容 -->
+                                <WrapPanel Orientation="Horizontal" Margin="8">
+                                    <ItemsControl ItemsSource="{Binding Items}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Style="{StaticResource MediaCardStyle}" Width="160" Height="200"
+                                                        MouseLeftButtonUp="Card_Click">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="120"/>
+                                                            <RowDefinition Height="*"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <!-- 缩略图 / 占位图标 -->
+                                                        <Grid Grid.Row="0" Background="#252535">
+                                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+                                                                   Visibility="{Binding Thumbnail, Converter={StaticResource BoolToVis}}"/>
+                                                            <TextBlock Text="{Binding Source.MediaType, Converter={StaticResource TypeIcon}}"
+                                                                       FontFamily="Segoe MDL2 Assets" FontSize="36"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                                                       Visibility="{Binding Thumbnail, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}"/>
+                                                        </Grid>
+
+                                                        <!-- 文件信息 -->
+                                                        <StackPanel Grid.Row="1" Margin="8,6">
+                                                            <TextBlock Text="{Binding FileName, Mode=OneWay}"
+                                                                       FontSize="12" FontWeight="Medium"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Foreground="{DynamicResource PrimaryTextBrush}"/>
+                                                            <TextBlock Margin="0,2,0,0" FontSize="11"
+                                                                       Foreground="{DynamicResource SecondaryTextBrush}">
+                                                                <Run Text="{Binding DurationSeconds, Mode=OneWay, Converter={StaticResource Duration}}"/>
+                                                                <Run Text=" · "/>
+                                                                <Run Text="{Binding FileSize, Mode=OneWay, Converter={StaticResource FileSize}}"/>
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </WrapPanel>
+                            </Expander>
+                        </hc:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- 空状态 -->
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsLoading}" Value="false"/>
+                                <Condition Binding="{Binding Items.Count}" Value="0"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="48"
+                       HorizontalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}"/>
+            <TextBlock Text="媒体库为空" FontSize="16" Margin="0,12,0,4"
+                       HorizontalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}"/>
+            <TextBlock Text="前往「扫描导入」添加媒体文件" FontSize="13"
+                       HorizontalAlignment="Center" Foreground="{DynamicResource ThirdlyTextBrush}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "name": "MediaManager",
+  "layers": {
+    "l5": "l5.json",
+    "l4": "l4",
+    "l3": "l3",
+    "l2": "l2"
+  },
+  "versions": [
+    "1.0.0"
+  ],
+  "currentVersion": "1.0.0",
+  "lastUpdated": "2026-04-16T16:46:10.768183"
+}

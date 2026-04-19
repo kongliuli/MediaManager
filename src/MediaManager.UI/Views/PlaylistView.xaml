@@ -1,0 +1,73 @@
+<UserControl x:Class="MediaManager.UI.Views.PlaylistView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:hc="https://handyorg.github.io/handycontrol">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="播放列表" FontSize="22" FontWeight="SemiBold"
+                   Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,16"/>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 播放列表侧边栏 -->
+            <hc:Card Grid.Column="0" Margin="0,0,12,0">
+                <DockPanel Margin="12">
+                    <!-- 新建 -->
+                    <Grid DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <hc:TextBox Grid.Column="0"
+                                    Text="{Binding NewPlaylistName, UpdateSourceTrigger=PropertyChanged}"
+                                    hc:InfoElement.Placeholder="新建播放列表..."/>
+                        <Button Grid.Column="1" Margin="8,0,0,0"
+                                Style="{StaticResource ButtonPrimary}"
+                                Content="+" Command="{Binding CreatePlaylistCommand}"/>
+                    </Grid>
+
+                    <ListBox DockPanel.Dock="Top"
+                             ItemsSource="{Binding Playlists}"
+                             SelectedItem="{Binding SelectedPlaylist}"
+                             Background="Transparent" BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <TextBlock Text="{Binding Name}" FontSize="13"
+                                               Foreground="{DynamicResource PrimaryTextBrush}"/>
+                                    <Button HorizontalAlignment="Right"
+                                            Style="{StaticResource ButtonIcon}"
+                                            Command="{Binding DataContext.DeletePlaylistCommand,
+                                                RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                   Foreground="{DynamicResource DangerBrush}"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </hc:Card>
+
+            <!-- 曲目列表 -->
+            <hc:Card Grid.Column="1">
+                <StackPanel Margin="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE90B;" FontFamily="Segoe MDL2 Assets" FontSize="40"
+                               HorizontalAlignment="Center" Foreground="{DynamicResource ThirdlyTextBrush}"/>
+                    <TextBlock Text="选择播放列表查看曲目" FontSize="13" Margin="0,12,0,0"
+                               HorizontalAlignment="Center" Foreground="{DynamicResource ThirdlyTextBrush}"/>
+                </StackPanel>
+            </hc:Card>
+        </Grid>
+    </Grid>
+</UserControl>
