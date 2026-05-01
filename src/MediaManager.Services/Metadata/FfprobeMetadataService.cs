@@ -1,7 +1,8 @@
 using MediaManager.Core.DTOs;
 using MediaManager.Core.Enums;
 using MediaManager.Core.Interfaces.Services;
-using System;
+using MediaManager.Services.Media;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
@@ -15,11 +16,27 @@ namespace MediaManager.Services.Metadata;
 /// </summary>
 public class FfprobeMetadataService : IMetadataService
 {
+    private readonly IFfmpegLocator _ffmpegLocator;
+    private readonly ILogger<FfprobeMetadataService> _logger;
+
+    public FfprobeMetadataService(IFfmpegLocator ffmpegLocator, ILogger<FfprobeMetadataService> logger)
+    {
+        _ffmpegLocator = ffmpegLocator;
+        _logger = logger;
+    }
+
     public async Task<MetadataResult> ExtractAsync(string filePath, CancellationToken ct = default)
     {
+        // 如果 ffprobe 不可用，返回基于文件信息的基本结果
+        if (!_ffmpegLocator.IsFfprobeAvailable)
+        {
+            _logger.LogWarning("FFprobe 不可用，跳过元数据提取: {FilePath}", filePath);
+            return CreateFallbackResult(filePath);
+        }
+
         var processStartInfo = new ProcessStartInfo
         {
-            FileName = "ffprobe",
+            FileName = _ffmpegLocator.FfprobePath,
             Arguments = $"-v quiet -print_format json -show_streams -show_format \"{filePath}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -30,7 +47,8 @@ public class FfprobeMetadataService : IMetadataService
         using var process = Process.Start(processStartInfo);
         if (process == null)
         {
-            throw new InvalidOperationException("无法启动 ffprobe 进程");
+            _logger.LogError("无法启动 ffprobe 进程");
+            return CreateFallbackResult(filePath);
         }
 
         using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -51,11 +69,45 @@ public class FfprobeMetadataService : IMetadataService
         if (process.ExitCode != 0)
         {
             var error = await errorTask;
-            throw new Exception($"ffprobe 执行失败: {error}");
+            _logger.LogWarning("ffprobe 执行失败，使用回退模式: {Error}", error);
+            return CreateFallbackResult(filePath);
         }
 
         var output = await outputTask;
         return ParseMetadata(output, filePath);
+    }
+
+    /// <summary>
+    /// 当 ffprobe 不可用时创建回退结果
+    /// </summary>
+    private MetadataResult CreateFallbackResult(string filePath)
+    {
+        var fileInfo = new FileInfo(filePath);
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+
+        MediaType mediaType;
+        if (new[] { ".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".opus" }.Contains(extension))
+        {
+            mediaType = MediaType.Audio;
+        }
+        else if (new[] { ".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".webm", ".m4v" }.Contains(extension))
+        {
+            mediaType = MediaType.Video;
+        }
+        else if (new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svg" }.Contains(extension))
+        {
+            mediaType = MediaType.Image;
+        }
+        else
+        {
+            mediaType = MediaType.Other;
+        }
+
+        return new MetadataResult
+        {
+            FileSize = fileInfo.Length,
+            MediaType = mediaType
+        };
     }
 
     private MetadataResult ParseMetadata(string jsonOutput, string filePath)

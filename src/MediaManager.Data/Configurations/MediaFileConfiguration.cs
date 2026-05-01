@@ -27,6 +27,8 @@ public class MediaFileConfiguration : IEntityTypeConfiguration<MediaFile>
         // TPH 鉴别器
         builder.HasDiscriminator(m => m.MediaType)
                .HasValue<AudioFile>(Core.Enums.MediaType.Audio)
-               .HasValue<VideoFile>(Core.Enums.MediaType.Video);
+               .HasValue<VideoFile>(Core.Enums.MediaType.Video)
+               .HasValue<ImageFile>(Core.Enums.MediaType.Image)
+               .HasValue<OtherFile>(Core.Enums.MediaType.Other);
     }
 }

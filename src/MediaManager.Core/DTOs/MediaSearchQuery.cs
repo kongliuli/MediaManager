@@ -8,6 +8,7 @@ namespace MediaManager.Core.DTOs;
 /// </summary>
 public class MediaSearchQuery
 {
+    public int? LibraryId { get; set; }
     public string? Keyword { get; set; }
     public MediaType? MediaType { get; set; }
     public List<int> TagIds { get; set; } = [];

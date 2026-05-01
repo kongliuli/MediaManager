@@ -16,6 +16,7 @@ public class MediaDbContext(DbContextOptions<MediaDbContext> options) : DbContex
     public DbSet<MediaTag> MediaTags => Set<MediaTag>();
     public DbSet<Playlist> Playlists => Set<Playlist>();
     public DbSet<PlaylistItem> PlaylistItems => Set<PlaylistItem>();
+    public DbSet<Library> Libraries => Set<Library>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

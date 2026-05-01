@@ -3,8 +3,6 @@ namespace MediaManager.Core.Models;
 /// <summary>视频文件，继承自 MediaFile</summary>
 public class VideoFile : MediaFile
 {
-    public int Width { get; set; }
-    public int Height { get; set; }
     public double FrameRate { get; set; }
     public string VideoCodec { get; set; } = string.Empty;
     public string AudioCodec { get; set; } = string.Empty;

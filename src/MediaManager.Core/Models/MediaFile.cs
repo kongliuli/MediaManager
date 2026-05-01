@@ -40,7 +40,17 @@ public abstract class MediaFile
     /// <summary>用户备注</summary>
     public string? Notes { get; set; }
 
+    /// <summary>所属媒体库 ID（可为 null，表示未关联媒体库）</summary>
+    public int? LibraryId { get; set; }
+
+    // 共享属性：视频和图像都有尺寸信息
+    public int? Width { get; set; }
+    public int? Height { get; set; }
+
     // 导航属性
     public ICollection<MediaTag> MediaTags { get; set; } = [];
     public ICollection<PlaylistItem> PlaylistItems { get; set; } = [];
+    
+    /// <summary>所属媒体库</summary>
+    public virtual Library? Library { get; set; }
 }

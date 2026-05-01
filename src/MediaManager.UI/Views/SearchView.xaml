@@ -1,0 +1,96 @@
+<UserControl x:Class="MediaManager.UI.Views.SearchView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:conv="clr-namespace:MediaManager.UI.Converters">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:FileSizeConverter x:Key="FileSize"/>
+        <conv:DurationConverter x:Key="Duration"/>
+        <conv:MediaTypeIconConverter x:Key="TypeIcon"/>
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="搜索" FontSize="22" FontWeight="SemiBold"
+                   Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,16"/>
+
+        <!-- 搜索过滤面板 -->
+        <hc:Card Grid.Row="1" Margin="0,0,0,16">
+            <Grid Margin="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <hc:SearchBar Grid.Column="0"
+                              Text="{Binding Keyword, UpdateSourceTrigger=PropertyChanged}"
+                              hc:InfoElement.Placeholder="搜索文件名、标题、艺术家..."
+                              Command="{Binding SearchCommand}"/>
+
+                <ComboBox Grid.Column="1" Margin="12,0"
+                          SelectedValue="{Binding MediaTypeFilter}"
+                          SelectedValuePath="Tag">
+                    <ComboBoxItem Content="全部类型" Tag="{x:Null}" IsSelected="True"/>
+                    <ComboBoxItem Content="音频" Tag="Audio"/>
+                    <ComboBoxItem Content="视频" Tag="Video"/>
+                    <ComboBoxItem Content="图片" Tag="Image"/>
+                </ComboBox>
+
+                <Button Grid.Column="2" Style="{StaticResource ButtonPrimary}"
+                        Content="搜索" Command="{Binding SearchCommand}"/>
+            </Grid>
+        </hc:Card>
+
+        <!-- 结果列表 -->
+        <Grid Grid.Row="2">
+            <hc:LoadingCircle IsRunning="{Binding IsLoading}"
+                              Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+            <DockPanel Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}">
+                <TextBlock DockPanel.Dock="Top" Margin="0,0,0,8" FontSize="13"
+                           Foreground="{DynamicResource SecondaryTextBrush}">
+                    <Run Text="共找到 "/>
+                    <Run Text="{Binding TotalCount, Mode=OneWay}" FontWeight="SemiBold"
+                         Foreground="{DynamicResource PrimaryBrush}"/>
+                    <Run Text=" 个结果"/>
+                </TextBlock>
+
+                <ListView ItemsSource="{Binding Results}"
+                          SelectedItem="{Binding SelectedItem}"
+                          Background="Transparent" BorderThickness="0">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="" Width="36">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Source.MediaType, Converter={StaticResource TypeIcon}}"
+                                                   FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                                   HorizontalAlignment="Center"
+                                                   Foreground="{DynamicResource PrimaryBrush}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="文件名" Width="280"
+                                            DisplayMemberBinding="{Binding FileName, Mode=OneWay}"/>
+                            <GridViewColumn Header="时长" Width="80"
+                                            DisplayMemberBinding="{Binding DurationSeconds, Mode=OneWay, Converter={StaticResource Duration}}"/>
+                            <GridViewColumn Header="大小" Width="90"
+                                            DisplayMemberBinding="{Binding FileSize, Mode=OneWay, Converter={StaticResource FileSize}}"/>
+                            <GridViewColumn Header="添加时间" Width="140"
+                                            DisplayMemberBinding="{Binding DateAdded, Mode=OneWay, StringFormat=yyyy-MM-dd HH:mm}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Grid>
+    </Grid>
+</UserControl>

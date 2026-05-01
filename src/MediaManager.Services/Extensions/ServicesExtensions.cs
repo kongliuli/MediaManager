@@ -16,6 +16,9 @@ public static class ServicesExtensions
 {
     public static IServiceCollection AddMediaServices(this IServiceCollection services)
     {
+        // FFmpeg 定位服务（必须在其他服务之前注册）
+        services.AddSingleton<IFfmpegLocator, FfmpegLocator>();
+
         // 扫描
         services.AddSingleton<IFileScannerService, FileScannerService>();
         services.AddTransient<ScanPipelineOrchestrator>();
@@ -26,6 +29,7 @@ public static class ServicesExtensions
         // 媒体处理
         services.AddSingleton<IHashService, HashService>();
         services.AddSingleton<IThumbnailService, ThumbnailService>();
+        services.AddSingleton<IImageThumbnailService, ImageThumbnailService>();
         services.AddSingleton<IWaveformService, WaveformService>();
 
         // 媒体库

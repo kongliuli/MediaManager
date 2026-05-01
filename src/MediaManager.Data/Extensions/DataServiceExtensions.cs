@@ -20,6 +20,7 @@ public static class DataServiceExtensions
         services.AddScoped<IMediaRepository, MediaRepository>();
         services.AddScoped<ITagRepository, TagRepository>();
         services.AddScoped<IPlaylistRepository, PlaylistRepository>();
+        services.AddScoped<ILibraryRepository, LibraryRepository>();
 
         return services;
     }

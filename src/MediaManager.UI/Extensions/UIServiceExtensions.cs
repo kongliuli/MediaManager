@@ -14,13 +14,14 @@ public static class UIServiceExtensions
     {
         // ViewModels
         services.AddSingleton<MainViewModel>();
+        services.AddSingleton<DetailViewModel>();   // MainViewModel 持有引用，必须 Singleton
         services.AddTransient<LibraryViewModel>();
-        services.AddTransient<ScanViewModel>();
+        services.AddSingleton<ScanViewModel>();
         services.AddTransient<SearchViewModel>();
-        services.AddTransient<DetailViewModel>();
         services.AddTransient<PlaylistViewModel>();
         services.AddTransient<DuplicateViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<MediaLibraryViewModel>();
 
         // Views
         services.AddTransient<MainWindow>();
@@ -31,6 +32,7 @@ public static class UIServiceExtensions
         services.AddTransient<PlaylistView>();
         services.AddTransient<DuplicateView>();
         services.AddTransient<SettingsView>();
+        services.AddTransient<MediaLibraryView>();
 
         return services;
     }

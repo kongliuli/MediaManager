@@ -4,6 +4,11 @@
 *.user
 *.sln.docstates
 
+# Database
+media.db
+media.db-shm
+media.db-wal
+
 # Build output
 bin/
 obj/

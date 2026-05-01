@@ -1,14 +1,14 @@
+using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
 using MediaManager.UI.ViewModels;
-using System.Windows;
 
 namespace MediaManager.UI;
 
-public partial class MainWindow : Window
+public partial class MainWindow : HandyControl.Controls.Window
 {
     public MainWindow(MainViewModel viewModel)
     {
         InitializeComponent();
         DataContext = viewModel;
-        viewModel.ContentFrame = ContentFrame;
     }
 }

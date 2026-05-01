@@ -3,5 +3,7 @@ namespace MediaManager.Core.Enums;
 public enum MediaType
 {
     Audio,
-    Video
+    Video,
+    Image,
+    Other
 }

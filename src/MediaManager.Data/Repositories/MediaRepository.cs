@@ -24,9 +24,14 @@ public class MediaRepository(MediaDbContext dbContext) : IMediaRepository
 
     public async Task<MediaSearchResult> SearchAsync(MediaSearchQuery query, CancellationToken ct = default)
     {
-        var dbQuery = dbContext.MediaFiles.AsQueryable();
+        var dbQuery = dbContext.MediaFiles.AsNoTracking();
 
         // 应用搜索条件
+        if (query.LibraryId.HasValue)
+        {
+            dbQuery = dbQuery.Where(f => f.LibraryId == query.LibraryId.Value);
+        }
+
         if (!string.IsNullOrEmpty(query.Keyword))
         {
             var keyword = $"%{query.Keyword}%";
@@ -96,8 +101,18 @@ public class MediaRepository(MediaDbContext dbContext) : IMediaRepository
         var existingFile = await GetByPathAsync(file.Path, ct);
         if (existingFile != null)
         {
-            // 更新现有文件
-            dbContext.Entry(existingFile).CurrentValues.SetValues(file);
+            // 更新现有文件，但跳过主键属性
+            var entry = dbContext.Entry(existingFile);
+            var currentValues = entry.CurrentValues;
+            
+            // 手动复制属性，跳过 Id
+            foreach (var property in currentValues.Properties)
+            {
+                if (property.Name != nameof(MediaFile.Id))
+                {
+                    currentValues[property] = property.GetGetter().GetClrValue(file);
+                }
+            }
         }
         else
         {
@@ -130,6 +145,7 @@ public class MediaRepository(MediaDbContext dbContext) : IMediaRepository
     public async Task<IReadOnlyList<(string Hash, long Id)>> GetAllHashesAsync(CancellationToken ct = default)
     {
         var result = await dbContext.MediaFiles
+            .AsNoTracking()
             .Where(f => !string.IsNullOrEmpty(f.Hash))
             .Select(f => new { f.Hash, f.Id })
             .ToListAsync(ct);
