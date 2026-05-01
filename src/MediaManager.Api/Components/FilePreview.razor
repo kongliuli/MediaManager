@@ -1,0 +1,161 @@
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div class="preview-modal" style="display: @(_isVisible ? "block" : "none"); position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 9999; overflow: auto;">
+    <div class="preview-container" style="max-width: 90vw; max-height: 90vh; margin: 5vh auto; background: white; border-radius: 8px; overflow: hidden;">
+        <div class="preview-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+            <h5 class="mb-0">@FileName</h5>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="ClosePreview">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="preview-body" style="padding: 20px; text-align: center;">
+            @if (IsLoading)
+            {
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-3">正在加载预览...</p>
+            }
+            else if (PreviewError != null)
+            {
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    @PreviewError
+                </div>
+            }
+            else
+            {
+                @switch (MediaType)
+                {
+                    case "image":
+                        <img src="@FileUrl" alt="@FileName" style="max-width: 100%; max-height: 70vh; object-fit: contain;" />
+                        break;
+                    case "video":
+                        <video controls style="max-width: 100%; max-height: 70vh;">
+                            <source src="@FileUrl" />
+                            您的浏览器不支持视频播放
+                        </video>
+                        break;
+                    case "audio":
+                        <div style="padding: 40px;">
+                            <i class="bi bi-music-note display-1 text-primary"></i>
+                            <p class="mt-3">@FileName</p>
+                            <audio controls class="mt-3" style="width: 100%;">
+                                <source src="@FileUrl" />
+                                您的浏览器不支持音频播放
+                            </audio>
+                        </div>
+                        break;
+                    default:
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            此文件类型不支持预览
+                        </div>
+                        <div class="mt-3">
+                            <a href="@FileUrl" download="@FileName" class="btn btn-primary">
+                                <i class="bi bi-download me-2"></i>下载文件
+                            </a>
+                        </div>
+                        break;
+                }
+            }
+        </div>
+        @if (FileInfo != null)
+        {
+            <div class="preview-footer" style="padding: 15px 20px; background: #f8f9fa; border-top: 1px solid #dee2e6;">
+                <div class="row text-muted small">
+                    <div class="col-md-4">
+                        <i class="bi bi-file-earmark me-1"></i>
+                        大小: @FormatFileSize(FileInfo.FileSize)
+                    </div>
+                    @if (FileInfo.Duration > 0)
+                    {
+                        <div class="col-md-4">
+                            <i class="bi bi-clock me-1"></i>
+                            时长: @FormatDuration(FileInfo.Duration)
+                        </div>
+                    }
+                    <div class="col-md-4">
+                        <i class="bi bi-calendar me-1"></i>
+                        上传: @FileInfo.UploadedAt.ToString("yyyy-MM-dd HH:mm")
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _isVisible = false;
+    private bool IsLoading = false;
+    private string? PreviewError = null;
+
+    [Parameter]
+    public string FileUrl { get; set; } = "";
+
+    [Parameter]
+    public string FileName { get; set; } = "";
+
+    [Parameter]
+    public FilePreviewInfo? FileInfo { get; set; }
+
+    private string MediaType
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(FileName))
+                return "unknown";
+
+            var extension = Path.GetExtension(FileName).ToLowerInvariant();
+            return extension switch
+            {
+                ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" => "image",
+                ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv" or ".webm" => "video",
+                ".mp3" or ".wav" or ".flac" or ".aac" or ".ogg" or ".m4a" => "audio",
+                _ => "unknown"
+            };
+        }
+    }
+
+    public void Show()
+    {
+        _isVisible = true;
+        IsLoading = false;
+        PreviewError = null;
+        StateHasChanged();
+    }
+
+    public void ClosePreview()
+    {
+        _isVisible = false;
+        StateHasChanged();
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        int order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size = size / 1024;
+        }
+        return $"{size:0.##} {sizes[order]}";
+    }
+
+    private string FormatDuration(int seconds)
+    {
+        if (seconds <= 0) return "-";
+        var time = TimeSpan.FromSeconds(seconds);
+        return time.Hours > 0 ? $"{time.Hours}:{time.Minutes:D2}:{time.Seconds:D2}" : $"{time.Minutes}:{time.Seconds:D2}";
+    }
+
+    public class FilePreviewInfo
+    {
+        public long FileSize { get; set; }
+        public int Duration { get; set; }
+        public DateTime UploadedAt { get; set; }
+    }
+}

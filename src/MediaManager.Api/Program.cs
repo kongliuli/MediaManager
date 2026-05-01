@@ -3,6 +3,7 @@ using MediaManager.Api.Hubs;
 using MediaManager.Data.Extensions;
 using MediaManager.Services.Extensions;
 using MediaManager.Api.Components;
+using MediaManager.Api.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,6 +59,29 @@ if (!Directory.Exists(appConfig.ThumbnailDirectory))
 builder.Services.AddSingleton(appConfig);
 builder.Services.AddDataServices(appConfig.DatabasePath);
 builder.Services.AddMediaServices();
+
+// 配置 OSS 服务
+var ossConfig = new OssConfig
+{
+    AccessKeyId = builder.Configuration.GetValue<string>("Oss:AccessKeyId") ?? "",
+    AccessKeySecret = builder.Configuration.GetValue<string>("Oss:AccessKeySecret") ?? "",
+    Endpoint = builder.Configuration.GetValue<string>("Oss:Endpoint") ?? "",
+    BucketName = builder.Configuration.GetValue<string>("Oss:BucketName") ?? "",
+    PublicUrlPrefix = builder.Configuration.GetValue<string>("Oss:PublicUrlPrefix") ?? "",
+    Enabled = builder.Configuration.GetValue<bool>("Oss:Enabled")
+};
+
+if (ossConfig.Enabled)
+{
+    builder.Services.AddSingleton(ossConfig);
+    builder.Services.AddSingleton<IOssService, OssService>();
+    Log.Information("阿里云 OSS 服务已启用");
+}
+else
+{
+    builder.Services.AddSingleton<IOssService>(new LocalStorageService());
+    Log.Information("使用本地存储服务");
+}
 
 // 添加后台服务
 builder.Services.AddHostedService<ScanBackgroundService>();

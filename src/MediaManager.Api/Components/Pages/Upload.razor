@@ -1,0 +1,440 @@
+@page "/upload"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<PageTitle>上传管理 - MediaManager</PageTitle>
+
+<div class="container-fluid">
+    <h1 class="mb-4">上传管理</h1>
+
+    <!-- 上传状态 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">上传设置</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">存储方式</dt>
+                        <dd class="col-sm-8">
+                            @if (UploadStatus?.OssEnabled == true)
+                            {
+                                <span class="badge bg-success">阿里云 OSS</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info">本地存储</span>
+                            }
+                        </dd>
+                        <dt class="col-sm-4">最大文件大小</dt>
+                        <dd class="col-sm-8">@UploadStatus?.MaxFileSizeFormatted</dd>
+                        <dt class="col-sm-4">支持格式</dt>
+                        <dd class="col-sm-8">@string.Join(", ", UploadStatus?.AllowedExtensions ?? Array.Empty<string>())</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-outline-primary" @onclick="LoadUploadStatus">
+                        <i class="bi bi-arrow-clockwise me-2"></i>刷新状态
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上传区域 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">上传文件</h5>
+        </div>
+        <div class="card-body">
+            <div class="upload-area @(_isDragging ? "drag-over" : "")"
+                 style="border: 2px dashed #dee2e6; border-radius: 8px; padding: 40px; text-align: center; transition: all 0.3s;"
+                 
+                 @ondragenter="HandleDragEnter"
+                 @ondragleave="HandleDragLeave"
+                 @ondrop="HandleDrop">
+                <i class="bi bi-cloud-arrow-up display-3 text-primary mb-3"></i>
+                <h4>拖拽文件到此处上传</h4>
+                <p class="text-muted">或</p>
+                <InputFile OnChange="HandleFileSelect" multiple accept="@string.Join(",", UploadStatus?.AllowedExtensions ?? Array.Empty<string>())" />
+                <button class="btn btn-primary mt-3" disabled="@IsUploading">
+                    @if (IsUploading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        <span>上传中...</span>
+                    }
+                    else
+                    {
+                        <span>选择文件</span>
+                    }
+                </button>
+            </div>
+
+            <!-- 上传进度 -->
+            @if (IsUploading)
+            {
+                <div class="mt-4">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar" role="progressbar" style="width: @UploadProgress%">
+                            @UploadProgress%
+                        </div>
+                    </div>
+                    <p class="text-muted mt-2">正在上传 @CurrentFileName...</p>
+                </div>
+            }
+
+            <!-- 上传结果 -->
+            @if (UploadResults.Any())
+            {
+                <div class="mt-4">
+                    <h5>上传结果</h5>
+                    <div class="alert @GetResultAlertClass()">
+                        成功: @SuccessCount | 失败: @FailedCount
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>文件名</th>
+                                    <th>大小</th>
+                                    <th>存储位置</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var result in UploadResults)
+                                {
+                                    <tr>
+                                        <td>@result.FileName</td>
+                                        <td>@FormatFileSize(result.FileSize)</td>
+                                        <td>@result.Storage</td>
+                                        <td>
+                                            @if (result.Success)
+                                            {
+                                                <span class="badge bg-success">成功</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">失败</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (result.Success)
+                                            {
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary" @onclick="() => PreviewFile(result)">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" @onclick="() => CopyUrl(result.Url)">
+                                                        <i class="bi bi-link-45deg"></i>
+                                                    </button>
+                                                </div>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <!-- 错误列表 -->
+            @if (UploadErrors.Any())
+            {
+                <div class="alert alert-danger mt-4">
+                    <h5><i class="bi bi-exclamation-triangle me-2"></i>错误</h5>
+                    <ul class="mb-0">
+                        @foreach (var error in UploadErrors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 最近上传 -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">最近上传</h5>
+            <button class="btn btn-sm btn-outline-primary" @onclick="LoadRecentUploads">
+                <i class="bi bi-arrow-clockwise"></i> 刷新
+            </button>
+        </div>
+        <div class="card-body">
+            @if (RecentUploads == null || !RecentUploads.Any())
+            {
+                <p class="text-muted text-center">暂无上传记录</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>文件名</th>
+                                <th>大小</th>
+                                <th>存储位置</th>
+                                <th>上传时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var upload in RecentUploads)
+                            {
+                                <tr>
+                                    <td>@upload.FileName</td>
+                                    <td>@FormatFileSize(upload.FileSize)</td>
+                                    <td>@upload.Storage</td>
+                                    <td>@upload.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" @onclick="() => PreviewFile(upload)">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" @onclick="() => DeleteFile(upload)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- 预览组件 -->
+<FilePreview @ref="PreviewComponent" />
+
+@code {
+    private UploadStatusInfo? UploadStatus;
+    private List<UploadResult> UploadResults = new();
+    private List<string> UploadErrors = new();
+    private List<RecentUpload> RecentUploads = new();
+    private bool IsUploading = false;
+    private int UploadProgress = 0;
+    private string CurrentFileName = "";
+    private int SuccessCount = 0;
+    private int FailedCount = 0;
+    private bool _isDragging = false;
+    private FilePreview? PreviewComponent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUploadStatus();
+        await LoadRecentUploads();
+    }
+
+    private async Task LoadUploadStatus()
+    {
+        try
+        {
+            UploadStatus = await Http.GetFromJsonAsync<UploadStatusInfo>("api/upload/status");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载上传状态失败: {ex.Message}");
+        }
+    }
+
+    private async Task LoadRecentUploads()
+    {
+        try
+        {
+            await Task.Delay(100);
+            RecentUploads = new List<RecentUpload>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载最近上传失败: {ex.Message}");
+        }
+    }
+
+    private void HandleDragEnter()
+    {
+        _isDragging = true;
+    }
+
+    private void HandleDragLeave()
+    {
+        _isDragging = false;
+    }
+
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        _isDragging = false;
+        
+        if (e.DataTransfer?.Files != null)
+        {
+            await UploadFiles(e.DataTransfer.Files);
+        }
+    }
+
+    private async Task HandleFileSelect(InputFileChangeEventArgs e)
+    {
+        await UploadFiles(e.GetMultipleFiles());
+    }
+
+    private async Task UploadFiles(IReadOnlyList<IBrowserFile> files)
+    {
+        if (files.Count == 0) return;
+
+        IsUploading = true;
+        UploadResults.Clear();
+        UploadErrors.Clear();
+        SuccessCount = 0;
+        FailedCount = 0;
+
+        var form = new MultipartFormDataContent();
+        
+        for (int i = 0; i < files.Count; i++)
+        {
+            var file = files[i];
+            CurrentFileName = file.Name;
+            UploadProgress = (int)((i + 0.5) / files.Count * 100);
+            StateHasChanged();
+
+            try
+            {
+                var fileContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 500 * 1024 * 1024));
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+                form.Add(fileContent, "file", file.Name);
+
+                var response = await Http.PostAsync("api/upload", form);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<UploadResult>();
+                    if (result != null)
+                    {
+                        UploadResults.Add(result);
+                        if (result.Success)
+                        {
+                            SuccessCount++;
+                        }
+                        else
+                        {
+                            FailedCount++;
+                            UploadErrors.Add(result.FileName + ": 上传失败");
+                        }
+                    }
+                }
+                else
+                {
+                    FailedCount++;
+                    UploadErrors.Add($"{file.Name}: HTTP {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                FailedCount++;
+                UploadErrors.Add($"{file.Name}: {ex.Message}");
+            }
+
+            form = new MultipartFormDataContent();
+        }
+
+        UploadProgress = 100;
+        IsUploading = false;
+        CurrentFileName = "";
+        StateHasChanged();
+
+        await LoadRecentUploads();
+    }
+
+    private void PreviewFile(UploadResult result)
+    {
+        PreviewComponent?.Show();
+    }
+
+    private void PreviewFile(RecentUpload upload)
+    {
+        PreviewComponent?.Show();
+    }
+
+    private void CopyUrl(string url)
+    {
+        // 在实际应用中可以使用剪贴板API
+        Console.WriteLine($"URL: {url}");
+    }
+
+    private async Task DeleteFile(RecentUpload upload)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", $"确定要删除 {upload.FileName} 吗？"))
+        {
+            return;
+        }
+
+        try
+        {
+            var response = await Http.DeleteAsync($"api/upload/{upload.FilePath}");
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadRecentUploads();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"删除失败: {ex.Message}");
+        }
+    }
+
+    private string GetResultAlertClass()
+    {
+        if (FailedCount == 0) return "alert-success";
+        if (SuccessCount == 0) return "alert-danger";
+        return "alert-warning";
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        int order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size = size / 1024;
+        }
+        return $"{size:0.##} {sizes[order]}";
+    }
+
+    [Inject]
+    private IJSRuntime? JS { get; set; }
+
+    public class UploadStatusInfo
+    {
+        public bool OssEnabled { get; set; }
+        public long MaxFileSize { get; set; }
+        public string MaxFileSizeFormatted { get; set; } = "";
+        public string[] AllowedExtensions { get; set; } = Array.Empty<string>();
+    }
+
+    public class UploadResult
+    {
+        public bool Success { get; set; }
+        public string FileName { get; set; } = "";
+        public long FileSize { get; set; }
+        public string ContentType { get; set; } = "";
+        public string Url { get; set; } = "";
+        public string Storage { get; set; } = "";
+    }
+
+    public class RecentUpload
+    {
+        public string FileName { get; set; } = "";
+        public string FilePath { get; set; } = "";
+        public long FileSize { get; set; }
+        public string Storage { get; set; } = "";
+        public DateTime UploadedAt { get; set; }
+    }
+}
