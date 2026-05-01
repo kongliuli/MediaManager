@@ -1,8 +1,29 @@
+using MediaManager.Core.Enums;
+
 namespace MediaManager.Core.Models;
 
 /// <summary>视频文件，继承自 MediaFile</summary>
 public class VideoFile : MediaFile
 {
+    /// <summary>
+    /// 视频子类型（类型化访问）
+    /// </summary>
+    public VideoSubType? TypedSubType
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(SubType))
+                return null;
+            if (Enum.TryParse<VideoSubType>(SubType, out var result))
+                return result;
+            return null;
+        }
+        set
+        {
+            SubType = value?.ToString();
+        }
+    }
+
     public double FrameRate { get; set; }
     public string VideoCodec { get; set; } = string.Empty;
     public string AudioCodec { get; set; } = string.Empty;

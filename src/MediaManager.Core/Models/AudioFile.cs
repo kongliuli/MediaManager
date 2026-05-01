@@ -5,6 +5,25 @@ namespace MediaManager.Core.Models;
 /// <summary>音频文件，继承自 MediaFile</summary>
 public class AudioFile : MediaFile
 {
+    /// <summary>
+    /// 音频子类型（类型化访问）
+    /// </summary>
+    public AudioSubType? TypedSubType
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(SubType))
+                return null;
+            if (Enum.TryParse<AudioSubType>(SubType, out var result))
+                return result;
+            return null;
+        }
+        set
+        {
+            SubType = value?.ToString();
+        }
+    }
+
     public int BitRate { get; set; }
     public int SampleRate { get; set; }
     public int Channels { get; set; }
