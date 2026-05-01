@@ -4,7 +4,12 @@ using MediaManager.Data.Extensions;
 using MediaManager.Services.Extensions;
 using MediaManager.Api.Components;
 using MediaManager.Api.Services;
+using MediaManager.Api.Models;
 using Serilog;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +26,70 @@ builder.Host.UseSerilog();
 // 添加服务到容器
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "MediaManager API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme.",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// 配置 JWT 认证
+var jwtConfig = new JwtConfig
+{
+    SecretKey = builder.Configuration["Jwt:SecretKey"] ?? "MediaManager_Default_Secret_Key_2024!",
+    Issuer = builder.Configuration["Jwt:Issuer"] ?? "MediaManager",
+    Audience = builder.Configuration["Jwt:Audience"] ?? "MediaManager",
+    AccessTokenExpirationMinutes = builder.Configuration.GetValue<int>("Jwt:AccessTokenExpirationMinutes", 60),
+    RefreshTokenExpirationDays = builder.Configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)
+};
+
+builder.Services.AddSingleton(jwtConfig);
+builder.Services.AddSingleton<IAuthService, AuthService>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtConfig.Issuer,
+        ValidAudience = jwtConfig.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.SecretKey))
+    };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdministratorRole", policy => policy.RequireRole("Administrator"));
+    options.AddPolicy("RequireModeratorRole", policy => policy.RequireRole("Moderator", "Administrator"));
+});
 
 // 添加 Blazor Server 服务
 builder.Services.AddRazorComponents()
@@ -60,28 +128,11 @@ builder.Services.AddSingleton(appConfig);
 builder.Services.AddDataServices(appConfig.DatabasePath);
 builder.Services.AddMediaServices();
 
-// 配置 OSS 服务
-var ossConfig = new OssConfig
-{
-    AccessKeyId = builder.Configuration.GetValue<string>("Oss:AccessKeyId") ?? "",
-    AccessKeySecret = builder.Configuration.GetValue<string>("Oss:AccessKeySecret") ?? "",
-    Endpoint = builder.Configuration.GetValue<string>("Oss:Endpoint") ?? "",
-    BucketName = builder.Configuration.GetValue<string>("Oss:BucketName") ?? "",
-    PublicUrlPrefix = builder.Configuration.GetValue<string>("Oss:PublicUrlPrefix") ?? "",
-    Enabled = builder.Configuration.GetValue<bool>("Oss:Enabled")
-};
-
-if (ossConfig.Enabled)
-{
-    builder.Services.AddSingleton(ossConfig);
-    builder.Services.AddSingleton<IOssService, OssService>();
-    Log.Information("阿里云 OSS 服务已启用");
-}
-else
-{
-    builder.Services.AddSingleton<IOssService>(new LocalStorageService());
-    Log.Information("使用本地存储服务");
-}
+// 配置云存储服务
+var storageProvider = builder.Configuration.GetValue<string>("Storage:Provider") ?? "Local";
+var cloudProvider = Enum.Parse<CloudStorageProvider>(storageProvider, true);
+builder.Services.AddSingleton<IOssService>(sp => 
+    CloudStorageFactory.CreateService(cloudProvider, sp, builder.Configuration));
 
 // 添加后台服务
 builder.Services.AddHostedService<ScanBackgroundService>();
@@ -112,6 +163,7 @@ app.UseAntiforgery();
 
 app.UseCors("AllowAll");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
@@ -122,5 +174,7 @@ app.MapHub<ScanProgressHub>("/hubs/scan-progress");
 // 映射 Blazor 组件
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+Log.Information("MediaManager Web API 已启动");
 
 app.Run();
