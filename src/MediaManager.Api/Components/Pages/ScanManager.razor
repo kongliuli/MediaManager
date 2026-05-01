@@ -1,0 +1,209 @@
+@page "/scan"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@implements IAsyncDisposable
+
+<PageTitle>扫描管理 - MediaManager</PageTitle>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>扫描管理</h1>
+        <button class="btn btn-primary" onclick="document.getElementById('scanModal').classList.add('show');">
+            <i class="bi bi-plus-circle me-2"></i>开始新扫描
+        </button>
+    </div>
+
+    <!-- 扫描任务列表 -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">扫描任务</h5>
+            <button class="btn btn-sm btn-outline-primary" @onclick="LoadTasks">
+                <i class="bi bi-arrow-clockwise"></i> 刷新
+            </button>
+        </div>
+        <div class="card-body">
+            @if (Tasks == null)
+            {
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            }
+            else if (!Tasks.Any())
+            {
+                <p class="text-muted text-center">暂无扫描任务</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>任务ID</th>
+                                <th>路径</th>
+                                <th>递归</th>
+                                <th>状态</th>
+                                <th>进度</th>
+                                <th>当前文件</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var task in Tasks)
+                            {
+                                <tr>
+                                    <td><code>@task.Id.Substring(0, 8)...</code></td>
+                                    <td>@task.LibraryPath</td>
+                                    <td>@(task.Recursive ? "是" : "否")</td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(task.Status)">
+                                            @task.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (task.TotalCount > 0)
+                                        {
+                                            <div class="progress" style="height: 20px; min-width: 100px;">
+                                                <div class="progress-bar" style="width: @((double)task.ProcessedCount / task.TotalCount * 100)%"></div>
+                                            </div>
+                                            <small>@task.ProcessedCount / @task.TotalCount</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">等待中...</span>
+                                        }
+                                    </td>
+                                    <td class="text-truncate" style="max-width: 200px;" title="@task.CurrentFile">
+                                        @task.CurrentFile
+                                    </td>
+                                    <td>@task.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        @if (task.Status == "Running")
+                                        {
+                                            <button class="btn btn-sm btn-danger" @onclick="() => CancelTask(task.Id)">
+                                                <i class="bi bi-x-circle"></i> 取消
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- 扫描模态框 -->
+<div class="modal" id="scanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">开始新扫描</h5>
+                <button type="button" class="btn-close" onclick="document.getElementById('scanModal').classList.remove('show');"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="libraryPath" class="form-label">目录路径</label>
+                    <input type="text" class="form-control" id="libraryPath" @bind="ScanPath" placeholder="例如: C:\Media">
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="recursive" @bind="Recursive">
+                    <label class="form-check-label" for="recursive">
+                        递归扫描子目录
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('scanModal').classList.remove('show');">取消</button>
+                <button type="button" class="btn btn-primary" @onclick="StartScan">开始扫描</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ScanTask>? Tasks;
+    private string ScanPath = "";
+    private bool Recursive = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasks();
+    }
+
+    private async Task LoadTasks()
+    {
+        try
+        {
+            Tasks = await Http.GetFromJsonAsync<List<ScanTask>>("api/scan/tasks");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载任务失败: {ex.Message}");
+        }
+    }
+
+    private async Task StartScan()
+    {
+        if (string.IsNullOrWhiteSpace(ScanPath))
+        {
+            return;
+        }
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/scan/start", new { LibraryPath = ScanPath, Recursive = Recursive });
+            if (response.IsSuccessStatusCode)
+            {
+                document.getElementById('scanModal').classList.remove('show');
+                await LoadTasks();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"启动扫描失败: {ex.Message}");
+        }
+    }
+
+    private async Task CancelTask(string taskId)
+    {
+        try
+        {
+            await Http.PostAsync($"api/scan/tasks/{taskId}/cancel", null);
+            await LoadTasks();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"取消任务失败: {ex.Message}");
+        }
+    }
+
+    private string GetStatusBadgeClass(string status) => status switch
+    {
+        "Pending" => "bg-secondary",
+        "Running" => "bg-primary",
+        "Completed" => "bg-success",
+        "Failed" => "bg-danger",
+        "Cancelled" => "bg-warning",
+        _ => "bg-secondary"
+    };
+
+    public ValueTask DisposeAsync()
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public class ScanTask
+    {
+        public string Id { get; set; } = "";
+        public string LibraryPath { get; set; } = "";
+        public bool Recursive { get; set; }
+        public string Status { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+        public int ProcessedCount { get; set; }
+        public int TotalCount { get; set; }
+        public string CurrentFile { get; set; } = "";
+    }
+}

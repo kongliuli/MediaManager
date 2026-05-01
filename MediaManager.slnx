@@ -4,5 +4,6 @@
     <Project Path="src/MediaManager.Data/MediaManager.Data.csproj" />
     <Project Path="src/MediaManager.Services/MediaManager.Services.csproj" />
     <Project Path="src/MediaManager.UI/MediaManager.UI.csproj" />
+    <Project Path="src/MediaManager.Api/MediaManager.Api.csproj" />
   </Folder>
 </Solution>
