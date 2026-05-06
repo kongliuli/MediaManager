@@ -3,168 +3,170 @@
 @inject NavigationManager NavManager
 @implements IAsyncDisposable
 
-<PageTitle>首页 - MediaManager</PageTitle>
+<PageTitle>MediaManager - 智能媒体管理</PageTitle>
 
-<div class="container-fluid">
-    <h1 class="mb-4">欢迎使用 MediaManager</h1>
+<div class="mm-page-header mm-animate-in">
+    <h1 class="mm-page-title">欢迎回来</h1>
+    <p class="mm-page-subtitle">管理您的媒体文件，发现精彩内容</p>
+</div>
 
-    <!-- 统计卡片 -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card stat-card total-card">
-                <div class="card-body">
-                    <h5 class="card-title">总文件数</h5>
-                    <h2 class="card-text">@Stats?.TotalCount ?? 0</h2>
-                    <p class="card-text"><small class="text-muted">@Stats?.TotalSizeFormatted</small></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card stat-card audio-card">
-                <div class="card-body">
-                    <h5 class="card-title">音频文件</h5>
-                    <h2 class="card-text text-primary">@Stats?.AudioCount ?? 0</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card stat-card video-card">
-                <div class="card-body">
-                    <h5 class="card-title">视频文件</h5>
-                    <h2 class="card-text text-danger">@Stats?.VideoCount ?? 0</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card stat-card image-card">
-                <div class="card-body">
-                    <h5 class="card-title">图片文件</h5>
-                    <h2 class="card-text text-success">@Stats?.ImageCount ?? 0</h2>
-                </div>
-            </div>
+<!-- 统计卡片区域 -->
+<div class="row mb-5">
+    <div class="col-md-3 mb-4 mm-animate-in mm-animate-delay-1">
+        <div class="mm-stat-card mm-stat-card--primary">
+            <div class="mm-stat-label">总文件数</div>
+            <div class="mm-stat-value">@Stats?.TotalCount ?? 0</div>
+            <div class="mm-stat-sub">@Stats?.TotalSizeFormatted</div>
         </div>
     </div>
-
-    <!-- 快捷操作 -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">快捷操作</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <button class="btn btn-primary w-100" onclick="document.getElementById('scanModal').classList.add('show');">
-                        <i class="bi bi-plus-circle me-2"></i>开始新扫描
-                    </button>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <button class="btn btn-secondary w-100" @onclick="() => NavManager.NavigateTo("/media")">
-                        <i class="bi bi-folder-open me-2"></i>浏览媒体库
-                    </button>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <button class="btn btn-info w-100 text-white" @onclick="() => NavManager.NavigateTo("/duplicates")">
-                        <i class="bi bi-search me-2"></i>查找重复文件
-                    </button>
-                </div>
-            </div>
+    <div class="col-md-3 mb-4 mm-animate-in mm-animate-delay-2">
+        <div class="mm-stat-card mm-stat-card--audio">
+            <div class="mm-stat-label">音频文件</div>
+            <div class="mm-stat-value">@Stats?.AudioCount ?? 0</div>
+            <div class="mm-stat-sub">音乐、播客等</div>
         </div>
     </div>
-
-    <!-- 最近扫描任务 -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">最近扫描任务</h5>
-            <button class="btn btn-sm btn-outline-primary" @onclick="LoadTasks">
-                <i class="bi bi-arrow-clockwise"></i> 刷新
-            </button>
+    <div class="col-md-3 mb-4 mm-animate-in mm-animate-delay-3">
+        <div class="mm-stat-card mm-stat-card--video">
+            <div class="mm-stat-label">视频文件</div>
+            <div class="mm-stat-value">@Stats?.VideoCount ?? 0</div>
+            <div class="mm-stat-sub">影片、视频等</div>
         </div>
-        <div class="card-body">
-            @if (Tasks == null || !Tasks.Any())
-            {
-                <p class="text-muted text-center">暂无扫描任务</p>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>任务ID</th>
-                                <th>路径</th>
-                                <th>状态</th>
-                                <th>进度</th>
-                                <th>创建时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var task in Tasks.Take(5))
-                            {
-                                <tr>
-                                    <td><code>@task.Id.Substring(0, 8)...</code></td>
-                                    <td>@task.LibraryPath</td>
-                                    <td>
-                                        <span class="badge @GetStatusBadgeClass(task.Status)">
-                                            @task.Status
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if (task.TotalCount > 0)
-                                        {
-                                            <div class="progress" style="height: 20px;">
-                                                <div class="progress-bar" style="width: @((double)task.ProcessedCount / task.TotalCount * 100)%"></div>
-                                            </div>
-                                            <small>@task.ProcessedCount / @task.TotalCount</small>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">等待中...</span>
-                                        }
-                                    </td>
-                                    <td>@task.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                                    <td>
-                                        @if (task.Status == "Running")
-                                        {
-                                            <button class="btn btn-sm btn-danger" @onclick="() => CancelTask(task.Id)">
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
+    </div>
+    <div class="col-md-3 mb-4 mm-animate-in mm-animate-delay-4">
+        <div class="mm-stat-card mm-stat-card--image">
+            <div class="mm-stat-label">图片文件</div>
+            <div class="mm-stat-value">@Stats?.ImageCount ?? 0</div>
+            <div class="mm-stat-sub">照片、图像等</div>
         </div>
     </div>
 </div>
 
+<!-- 快捷操作区域 -->
+<div class="mm-card mb-5 mm-animate-in" style="animation-delay: 0.3s;">
+    <div class="mm-card-header">
+        <h3 class="mm-card-title">快捷操作</h3>
+    </div>
+    <div class="card-body" style="padding-top: 0;">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <button class="mm-btn mm-btn-primary w-100" @onclick="ShowScanModal">
+                    <span class="mm-btn-icon">🔍</span>
+                    开始新扫描
+                </button>
+            </div>
+            <div class="col-md-4">
+                <button class="mm-btn mm-btn-secondary w-100" @onclick="() => NavManager.NavigateTo("/media")">
+                    <span class="mm-btn-icon">📂</span>
+                    浏览媒体库
+                </button>
+            </div>
+            <div class="col-md-4">
+                <button class="mm-btn mm-btn-secondary w-100" @onclick="() => NavManager.NavigateTo("/duplicates")">
+                    <span class="mm-btn-icon">🔄</span>
+                    查找重复文件
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近扫描任务 -->
+<div class="mm-card mm-animate-in" style="animation-delay: 0.4s;">
+    <div class="mm-card-header">
+        <h3 class="mm-card-title">最近扫描任务</h3>
+        <button class="mm-btn mm-btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" @onclick="LoadTasks">
+            🔄 刷新
+        </button>
+    </div>
+    <div class="card-body" style="padding-top: 0;">
+        @if (Tasks == null || !Tasks.Any())
+        {
+            <div class="text-center py-5">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                <p style="color: var(--mm-text-muted); margin: 0;">暂无扫描任务</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="mm-table">
+                    <thead>
+                        <tr>
+                            <th>任务ID</th>
+                            <th>路径</th>
+                            <th>状态</th>
+                            <th>进度</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var task in Tasks.Take(5))
+                        {
+                            <tr>
+                                <td>
+                                    <code style="background: var(--mm-bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                                        @task.Id.Substring(0, 8)...
+                                    </code>
+                                </td>
+                                <td>@task.LibraryPath</td>
+                                <td>
+                                    <span class="mm-badge @GetStatusBadgeClass(task.Status)">
+                                        @task.Status
+                                    </span>
+                                </td>
+                                <td style="min-width: 150px;">
+                                    @if (task.TotalCount > 0)
+                                    {
+                                        <div class="mm-progress mb-2">
+                                            <div class="mm-progress-bar" style="width: @((double)task.ProcessedCount / task.TotalCount * 100)%"></div>
+                                        </div>
+                                        <small style="color: var(--mm-text-muted);">@task.ProcessedCount / @task.TotalCount</small>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--mm-text-muted);">等待中...</span>
+                                    }
+                                </td>
+                                <td>@task.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    @if (task.Status == "Running")
+                                    {
+                                        <button class="mm-btn mm-btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" @onclick="() => CancelTask(task.Id)">
+                                            ✕
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
 <!-- 扫描模态框 -->
-<div class="modal" id="scanModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">开始新扫描</h5>
-                <button type="button" class="btn-close" onclick="document.getElementById('scanModal').classList.remove('show');"></button>
+<div class="mm-modal-overlay @(ShowScan ? "show" : "")" @onclick="CloseScanModal">
+    <div class="mm-modal" @onclick:stopPropagation>
+        <div class="mm-modal-header">
+            <h3 class="mm-modal-title">开始新扫描</h3>
+            <button class="mm-modal-close" @onclick="CloseScanModal">✕</button>
+        </div>
+        <div class="mm-modal-body">
+            <div class="mb-4">
+                <label class="mm-form-label">目录路径</label>
+                <input type="text" class="mm-form-input" @bind="ScanPath" placeholder="例如: C:\Media" />
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="libraryPath" class="form-label">目录路径</label>
-                    <input type="text" class="form-control" id="libraryPath" @bind="ScanPath" placeholder="例如: C:\Media">
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="recursive" @bind="Recursive">
-                    <label class="form-check-label" for="recursive">
-                        递归扫描子目录
-                    </label>
-                </div>
+            <div class="mm-form-check">
+                <input type="checkbox" class="mm-form-check-input" id="recursive" @bind="Recursive">
+                <label for="recursive" style="color: var(--mm-text-secondary);">递归扫描子目录</label>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('scanModal').classList.remove('show');">取消</button>
-                <button type="button" class="btn btn-primary" @onclick="StartScan">开始扫描</button>
-            </div>
+        </div>
+        <div class="mm-modal-footer">
+            <button class="mm-btn mm-btn-secondary" @onclick="CloseScanModal">取消</button>
+            <button class="mm-btn mm-btn-primary" @onclick="StartScan">开始扫描</button>
         </div>
     </div>
 </div>
@@ -174,6 +176,7 @@
     private List<ScanTask>? Tasks;
     private string ScanPath = "";
     private bool Recursive = true;
+    private bool ShowScan = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -205,6 +208,16 @@
         }
     }
 
+    private void ShowScanModal()
+    {
+        ShowScan = true;
+    }
+
+    private void CloseScanModal()
+    {
+        ShowScan = false;
+    }
+
     private async Task StartScan()
     {
         if (string.IsNullOrWhiteSpace(ScanPath))
@@ -217,7 +230,7 @@
             var response = await Http.PostAsJsonAsync("api/scan/start", new { LibraryPath = ScanPath, Recursive = Recursive });
             if (response.IsSuccessStatusCode)
             {
-                document.getElementById('scanModal').classList.remove('show');
+                CloseScanModal();
                 await LoadTasks();
                 await LoadStats();
             }
@@ -243,12 +256,12 @@
 
     private string GetStatusBadgeClass(string status) => status switch
     {
-        "Pending" => "bg-secondary",
-        "Running" => "bg-primary",
-        "Completed" => "bg-success",
-        "Failed" => "bg-danger",
-        "Cancelled" => "bg-warning",
-        _ => "bg-secondary"
+        "Pending" => "mm-badge-info",
+        "Running" => "mm-badge-info",
+        "Completed" => "mm-badge-success",
+        "Failed" => "mm-badge-danger",
+        "Cancelled" => "mm-badge-warning",
+        _ => "mm-badge-info"
     };
 
     public ValueTask DisposeAsync()

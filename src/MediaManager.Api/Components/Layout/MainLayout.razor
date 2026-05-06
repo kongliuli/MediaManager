@@ -1,34 +1,53 @@
 @inherits LayoutComponentBase
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <i class="bi bi-collection-play me-2"></i>MediaManager
-        </a>
+<!-- 顶部导航栏 -->
+<nav class="mm-navbar">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div class="mm-navbar-brand-icon">🎬</div>
+        <div class="mm-navbar-brand">MediaManager</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="color: var(--mm-text-muted); font-size: 0.9rem;">智能媒体管理平台</span>
     </div>
 </nav>
 
-<div class="sidebar">
-    <h5 class="mb-4">导航</h5>
-    <nav class="nav flex-column">
-        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-            <i class="bi bi-house"></i> 首页
+<!-- 侧边栏 -->
+<aside class="mm-sidebar">
+    <div class="mm-sidebar-title">导航菜单</div>
+    <nav style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <NavLink class="mm-nav-link" href="" Match="NavLinkMatch.All">
+            <span class="mm-nav-link-icon">🏠</span>
+            首页
         </NavLink>
-        <NavLink class="nav-link" href="media">
-            <i class="bi bi-files"></i> 媒体库
+        <NavLink class="mm-nav-link" href="media">
+            <span class="mm-nav-link-icon">📂</span>
+            媒体库
         </NavLink>
-        <NavLink class="nav-link" href="upload">
-            <i class="bi bi-cloud-upload"></i> 上传管理
+        <NavLink class="mm-nav-link" href="upload">
+            <span class="mm-nav-link-icon">☁️</span>
+            上传管理
         </NavLink>
-        <NavLink class="nav-link" href="scan">
-            <i class="bi bi-search"></i> 扫描管理
+        <NavLink class="mm-nav-link" href="scan">
+            <span class="mm-nav-link-icon">🔍</span>
+            扫描管理
         </NavLink>
-        <NavLink class="nav-link" href="duplicates">
-            <i class="bi bi-files-alt"></i> 重复文件
+        <NavLink class="mm-nav-link" href="duplicates">
+            <span class="mm-nav-link-icon">🔄</span>
+            重复文件
         </NavLink>
     </nav>
-</div>
+    
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--mm-border-subtle);">
+        <div class="mm-sidebar-title">系统信息</div>
+        <div style="color: var(--mm-text-muted); font-size: 0.85rem; line-height: 1.8;">
+            <div>版本: 2.0.0</div>
+            <div>架构: MediaManager</div>
+            <div>状态: ✅ 在线</div>
+        </div>
+    </div>
+</aside>
 
-<div class="main-content">
+<!-- 主内容区域 -->
+<main class="mm-main-content">
     @Body
-</div>
+</main>

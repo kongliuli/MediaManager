@@ -4,194 +4,182 @@
 
 <PageTitle>媒体库 - MediaManager</PageTitle>
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>媒体库</h1>
-        <div>
-            <div class="input-group" style="width: 300px;">
-                <input type="text" class="form-control" placeholder="搜索文件..." @bind="SearchKeyword" @bind:event="oninput">
-                <button class="btn btn-outline-secondary" @onclick="LoadMedia">
-                    <i class="bi bi-search"></i>
+<div class="mm-page-header mm-animate-in">
+    <h1 class="mm-page-title">媒体库</h1>
+    <p class="mm-page-subtitle">浏览和管理您的媒体文件</p>
+</div>
+
+<!-- 搜索和筛选器 -->
+<div class="mm-card mb-5 mm-animate-in" style="animation-delay: 0.1s;">
+    <div class="mm-card-header">
+        <h3 class="mm-card-title">搜索和筛选</h3>
+    </div>
+    <div class="card-body" style="padding-top: 0;">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input type="text" class="mm-form-input" placeholder="搜索文件..." @bind="SearchKeyword" @bind:event="oninput">
+                    <button class="mm-btn mm-btn-primary" @onclick="LoadMedia" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                        🔍
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select class="mm-form-input" @bind="SelectedMediaType">
+                    <option value="">全部类型</option>
+                    <option value="0">🎵 音频</option>
+                    <option value="1">🎬 视频</option>
+                    <option value="2">🖼️ 图片</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="mm-form-input" @bind="SortBy">
+                    <option value="DateAdded">📅 添加日期</option>
+                    <option value="FileName">📄 文件名</option>
+                    <option value="FileSize">💾 文件大小</option>
+                    <option value="Duration">⏱️ 时长</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="mm-form-input" @bind="SortDescending">
+                    <option value="true">⬇️ 降序</option>
+                    <option value="false">⬆️ 升序</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="mm-btn mm-btn-primary w-100" @onclick="LoadMedia">
+                    应用筛选
                 </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- 筛选器 -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <select class="form-select" @bind="SelectedMediaType">
-                        <option value="">全部类型</option>
-                        <option value="0">音频</option>
-                        <option value="1">视频</option>
-                        <option value="2">图片</option>
-                    </select>
+<!-- 媒体文件网格 -->
+@if (MediaItems == null)
+{
+    <div class="text-center py-5">
+        <div style="font-size: 4rem; margin-bottom: 1rem; animation: pulse 1.5s ease-in-out infinite;">⏳</div>
+        <p style="color: var(--mm-text-muted);">正在加载媒体文件...</p>
+    </div>
+}
+else if (!MediaItems.Any())
+{
+    <div class="text-center py-5">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">📭</div>
+        <p style="color: var(--mm-text-muted);">暂无媒体文件</p>
+    </div>
+}
+else
+{
+    <div class="mm-media-grid mm-animate-in" style="animation-delay: 0.2s;">
+        @foreach (var item in MediaItems)
+        {
+            <div class="mm-media-item" @onclick="() => ViewDetails(item)">
+                <div class="mm-media-thumb">
+                    @if (item.MediaType == 1)
+                    {
+                        <span>🎬</span>
+                    }
+                    else if (item.MediaType == 2)
+                    {
+                        <span>🖼️</span>
+                    }
+                    else
+                    {
+                        <span>🎵</span>
+                    }
                 </div>
-                <div class="col-md-3">
-                    <select class="form-select" @bind="SortBy">
-                        <option value="DateAdded">添加日期</option>
-                        <option value="FileName">文件名</option>
-                        <option value="FileSize">文件大小</option>
-                        <option value="Duration">时长</option>
-                    </select>
+                <div class="mm-media-info">
+                    <div class="mm-media-name" title="@item.FileName">@item.FileName</div>
+                    <div class="mm-media-meta">
+                        <span style="margin-right: 1rem;">💾 @FormatFileSize(item.FileSize)</span>
+                        @if (item.DurationSeconds > 0)
+                        {
+                            <span>⏱️ @FormatDuration(item.DurationSeconds)</span>
+                        }
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <select class="form-select" @bind="SortDescending">
-                        <option value="true">降序</option>
-                        <option value="false">升序</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <button class="btn btn-primary w-100" @onclick="LoadMedia">
-                        <i class="bi bi-funnel me-2"></i>应用筛选
-                    </button>
-                </div>
+            </div>
+        }
+    </div>
+
+    <!-- 分页 -->
+    <div class="d-flex justify-content-center mt-5 mm-animate-in" style="animation-delay: 0.3s;">
+        <div class="mm-card" style="display: inline-block; padding: 1rem 2rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="mm-btn mm-btn-secondary" @onclick="() => GoToPage(CurrentPage - 1)" disabled="@(CurrentPage <= 1)">
+                    ⬅️ 上一页
+                </button>
+                <span style="color: var(--mm-text-secondary);">第 @CurrentPage 页，共 @TotalPages 页</span>
+                <button class="mm-btn mm-btn-secondary" @onclick="() => GoToPage(CurrentPage + 1)" disabled="@(CurrentPage >= TotalPages)">
+                    下一页 ➡️
+                </button>
             </div>
         </div>
     </div>
-
-    <!-- 媒体文件网格 -->
-    @if (MediaItems == null)
-    {
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">加载中...</span>
-            </div>
-            <p class="mt-3">正在加载媒体文件...</p>
-        </div>
-    }
-    else if (!MediaItems.Any())
-    {
-        <div class="text-center py-5">
-            <i class="bi bi-folder-x display-1 text-muted"></i>
-            <p class="mt-3 text-muted">暂无媒体文件</p>
-        </div>
-    }
-    else
-    {
-        <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-            @foreach (var item in MediaItems)
-            {
-                <div class="col">
-                    <div class="card h-100 media-card">
-                        <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
-                            @if (item.MediaType == 1)
-                            {
-                                <i class="bi bi-film text-white display-3"></i>
-                            }
-                            else if (item.MediaType == 2)
-                            {
-                                <i class="bi bi-image text-white display-3"></i>
-                            }
-                            else
-                            {
-                                <i class="bi bi-music-note-beamed text-white display-3"></i>
-                            }
-                        </div>
-                        <div class="card-body">
-                            <h6 class="card-title text-truncate" title="@item.FileName">@item.FileName</h6>
-                            <p class="card-text small text-muted">
-                                <i class="bi bi-folder me-1"></i>@Path.GetFileName(Path.GetDirectoryName(item.Path))
-                            </p>
-                            <p class="card-text small">
-                                @if (item.DurationSeconds > 0)
-                                {
-                                    <span class="badge bg-info me-1">@FormatDuration(item.DurationSeconds)</span>
-                                }
-                                <span class="badge bg-secondary">@FormatFileSize(item.FileSize)</span>
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent">
-                            <div class="btn-group w-100" role="group">
-                                <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewDetails(item)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteMedia(item.Id)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-
-        <!-- 分页 -->
-        <div class="d-flex justify-content-center mt-4">
-            <nav>
-                <ul class="pagination">
-                    <li class="page-item @(CurrentPage <= 1 ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => GoToPage(CurrentPage - 1)">上一页</button>
-                    </li>
-                    <li class="page-item disabled">
-                        <span class="page-link">第 @CurrentPage 页，共 @TotalPages 页</span>
-                    </li>
-                    <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => GoToPage(CurrentPage + 1)">下一页</button>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    }
-</div>
+}
 
 <!-- 详情模态框 -->
 @if (SelectedMedia != null)
 {
-    <div class="modal" style="display: block; background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">文件详情</h5>
-                    <button type="button" class="btn-close" @onclick="() => SelectedMedia = null"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="bg-dark d-flex align-items-center justify-content-center rounded" style="height: 200px;">
-                                @if (SelectedMedia.MediaType == 1)
-                                {
-                                    <i class="bi bi-film text-white display-3"></i>
-                                }
-                                else if (SelectedMedia.MediaType == 2)
-                                {
-                                    <i class="bi bi-image text-white display-3"></i>
-                                }
-                                else
-                                {
-                                    <i class="bi bi-music-note-beamed text-white display-3"></i>
-                                }
-                            </div>
+    <div class="mm-modal-overlay show" @onclick="() => SelectedMedia = null">
+        <div class="mm-modal" style="max-width: 700px;" @onclick:stopPropagation>
+            <div class="mm-modal-header">
+                <h3 class="mm-modal-title">文件详情</h3>
+                <button class="mm-modal-close" @onclick="() => SelectedMedia = null">✕</button>
+            </div>
+            <div class="mm-modal-body">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div style="background: var(--mm-bg-tertiary); border-radius: var(--mm-radius-lg); height: 200px; display: flex; align-items: center; justify-content: center; font-size: 4rem;">
+                            @if (SelectedMedia.MediaType == 1)
+                            {
+                                <span>🎬</span>
+                            }
+                            else if (SelectedMedia.MediaType == 2)
+                            {
+                                <span>🖼️</span>
+                            }
+                            else
+                            {
+                                <span>🎵</span>
+                            }
                         </div>
-                        <div class="col-md-8">
-                            <h5>@SelectedMedia.FileName</h5>
-                            <p class="text-muted small">@SelectedMedia.Path</p>
-                            <dl class="row">
-                                <dt class="col-sm-4">文件大小</dt>
-                                <dd class="col-sm-8">@FormatFileSize(SelectedMedia.FileSize)</dd>
-                                
-                                <dt class="col-sm-4">时长</dt>
-                                <dd class="col-sm-8">@FormatDuration(SelectedMedia.DurationSeconds)</dd>
-                                
-                                <dt class="col-sm-4">添加时间</dt>
-                                <dd class="col-sm-8">@SelectedMedia.DateAdded.ToString("yyyy-MM-dd HH:mm")</dd>
-                                
-                                <dt class="col-sm-4">评分</dt>
-                                <dd class="col-sm-8">
+                    </div>
+                    <div class="col-md-8">
+                        <h4 style="margin-bottom: 0.5rem; color: var(--mm-text-primary);">@SelectedMedia.FileName</h4>
+                        <p style="color: var(--mm-text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">@SelectedMedia.Path</p>
+                        
+                        <div style="display: grid; gap: 1rem;">
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--mm-bg-tertiary); border-radius: var(--mm-radius-md);">
+                                <span style="color: var(--mm-text-muted);">💾 文件大小</span>
+                                <span style="color: var(--mm-text-primary); font-weight: 600;">@FormatFileSize(SelectedMedia.FileSize)</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--mm-bg-tertiary); border-radius: var(--mm-radius-md);">
+                                <span style="color: var(--mm-text-muted);">⏱️ 时长</span>
+                                <span style="color: var(--mm-text-primary); font-weight: 600;">@FormatDuration(SelectedMedia.DurationSeconds)</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--mm-bg-tertiary); border-radius: var(--mm-radius-md);">
+                                <span style="color: var(--mm-text-muted);">📅 添加时间</span>
+                                <span style="color: var(--mm-text-primary); font-weight: 600;">@SelectedMedia.DateAdded.ToString("yyyy-MM-dd HH:mm")</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--mm-bg-tertiary); border-radius: var(--mm-radius-md);">
+                                <span style="color: var(--mm-text-muted);">⭐ 评分</span>
+                                <span>
                                     @for (int i = 0; i < 5; i++)
                                     {
-                                        <i class="bi @(i < SelectedMedia.Rating ? "bi-star-fill text-warning" : "bi-star text-muted")"></i>
+                                        <span style="color: @(i < SelectedMedia.Rating ? "#ff9f00" : "#606070");">⭐</span>
                                     }
-                                </dd>
-                            </dl>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="() => SelectedMedia = null">关闭</button>
-                </div>
+            </div>
+            <div class="mm-modal-footer">
+                <button class="mm-btn mm-btn-secondary" @onclick="() => SelectedMedia = null">关闭</button>
+                <button class="mm-btn mm-btn-danger" @onclick="() => DeleteMedia(SelectedMedia.Id)">删除文件</button>
             </div>
         </div>
     </div>
@@ -260,6 +248,7 @@
             var response = await Http.DeleteAsync($"api/media/{id}");
             if (response.IsSuccessStatusCode)
             {
+                SelectedMedia = null;
                 await LoadMedia();
             }
         }
