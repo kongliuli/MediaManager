@@ -4,66 +4,65 @@
 
 <PageTitle>重复文件 - MediaManager</PageTitle>
 
-<div class="container-fluid">
-    <h1 class="mb-4">重复文件</h1>
-
-    @if (DuplicateGroups == null)
-    {
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">加载中...</span>
-            </div>
-            <p class="mt-3">正在查找重复文件...</p>
-        </div>
-    }
-    else if (!DuplicateGroups.Any())
-    {
-        <div class="text-center py-5">
-            <i class="bi bi-check-circle display-1 text-success"></i>
-            <p class="mt-3 text-muted">没有发现重复文件！</p>
-        </div>
-    }
-    else
-    {
-        @foreach (var group in DuplicateGroups)
-        {
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-files me-2"></i>
-                        @group.Files.FirstOrDefault()?.FileName
-                        @group.Files.FirstOrDefault()?.FileName.Split('.').LastOrDefault()
-                        文件 (可回收: @FormatFileSize(group.ReclaimableSize)
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        @foreach (var file in group.Files)
-                        {
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div class="flex-grow-1 me-3">
-                                    <h6 class="mb-1">@file.FileName</h6>
-                                    <p class="mb-0 text-muted small">@file.Path</p>
-                                    <small class="text-muted">
-                                        @FormatFileSize(file.FileSize) · 添加于 @file.DateAdded.ToString("yyyy-MM-dd")</small>
-                                    </p>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-danger" @onclick="() => KeepFile(file)">
-                                        <i class="bi bi-check-circle me-1"></i>保留
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteFile(file.Id)">
-                                        <i class="bi bi-trash me-1"></i>删除
-                                    </button>
-                                </div>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
-        }
-    }
+<div class="mm-page-header mm-animate-in">
+    <h1 class="mm-page-title">重复文件</h1>
+    <p class="mm-page-subtitle">查找并处理重复的媒体文件</p>
 </div>
+
+@if (DuplicateGroups == null)
+{
+    <div class="text-center py-5 mm-animate-in" style="animation-delay: 0.1s;">
+        <div style="font-size: 3rem; margin-bottom: 1rem; animation: pulse 1.5s ease-in-out infinite;">⏳</div>
+        <p style="color: var(--mm-text-muted);">正在查找重复文件...</p>
+    </div>
+}
+else if (!DuplicateGroups.Any())
+{
+    <div class="text-center py-5 mm-animate-in" style="animation-delay: 0.1s;">
+        <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--mm-accent-primary);">✅</div>
+        <p style="color: var(--mm-text-muted);">没有发现重复文件！</p>
+    </div>
+}
+else
+{
+    int delay = 1;
+    foreach (var group in DuplicateGroups)
+    {
+        <div class="mm-card mb-5 mm-animate-in" style="animation-delay: @(delay * 0.1) s;">
+            <div class="mm-card-header">
+                <h3 class="mm-card-title">
+                    📄 @group.Files.FirstOrDefault()?.FileName 
+                    (@group.Files.Count 份, 可回收: @FormatFileSize(group.ReclaimableSize))
+                </h3>
+            </div>
+            <div style="padding: 0 1.5rem 1.5rem;">
+                <div style="display: grid; gap: 1rem;">
+                    @foreach (var file in group.Files)
+                    {
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--mm-bg-tertiary); border-radius: var(--mm-radius-md); gap: 1.5rem;">
+                            <div style="flex-grow: 1; min-width: 0;">
+                                <div style="font-weight: 600; color: var(--mm-text-primary); margin-bottom: 0.25rem;">@file.FileName</div>
+                                <div style="font-size: 0.85rem; color: var(--mm-text-muted); margin-bottom: 0.25rem;">@file.Path</div>
+                                <div style="font-size: 0.8rem; color: var(--mm-text-muted);">
+                                    📦 @FormatFileSize(file.FileSize) · 📅 @file.DateAdded.ToString("yyyy-MM-dd")
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="mm-btn mm-btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" @onclick="() => KeepFile(file)">
+                                    ✅ 保留
+                                </button>
+                                <button class="mm-btn mm-btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" @onclick="() => DeleteFile(file.Id)">
+                                    🗑️ 删除
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        delay++;
+    }
+}
 
 @code {
     private List<DuplicateGroup>? DuplicateGroups;
