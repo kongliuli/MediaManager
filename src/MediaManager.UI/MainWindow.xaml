@@ -11,6 +11,7 @@
 
     <hc:Window.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
         <!-- DataTemplate 路由：ContentControl 根据 ViewModel 类型自动选择 View -->
         <DataTemplate DataType="{x:Type vm:LibraryViewModel}">
             <views:LibraryView/>
@@ -29,6 +30,12 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:DuplicateViewModel}">
             <views:DuplicateView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CacheViewModel}">
+            <views:CacheView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PerformanceViewModel}">
+            <views:PerformanceView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <views:SettingsView/>
@@ -107,6 +114,22 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                             <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="0,0,12,0"/>
                             <TextBlock Text="重复文件"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigateCacheCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <TextBlock Text="&#xE8B8;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="0,0,12,0"/>
+                            <TextBlock Text="缓存管理"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigatePerformanceCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <TextBlock Text="&#xE7B7;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="0,0,12,0"/>
+                            <TextBlock Text="性能监控"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>

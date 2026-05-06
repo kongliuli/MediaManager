@@ -20,6 +20,8 @@ public static class UIServiceExtensions
         services.AddTransient<SearchViewModel>();
         services.AddTransient<PlaylistViewModel>();
         services.AddTransient<DuplicateViewModel>();
+        services.AddTransient<CacheViewModel>();
+        services.AddTransient<PerformanceViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<MediaLibraryViewModel>();
 
@@ -31,6 +33,8 @@ public static class UIServiceExtensions
         services.AddTransient<DetailView>();
         services.AddTransient<PlaylistView>();
         services.AddTransient<DuplicateView>();
+        services.AddTransient<CacheView>();
+        services.AddTransient<PerformanceView>();
         services.AddTransient<SettingsView>();
         services.AddTransient<MediaLibraryView>();
 

@@ -34,17 +34,25 @@ public partial class CacheViewModel : ObservableObject
     private bool _isLoading;
 
     [ObservableProperty]
-    private string _statusMessage = string.Empty;
+    private string _statusMessage = "就绪";
 
     public ObservableCollection<CacheItemDisplay> CacheItems { get; } = new();
 
     public CacheViewModel(ICacheService cacheService)
     {
         _cacheService = cacheService;
+        
+        // 初始化时加载数据
+        _ = LoadInitialDataAsync();
+    }
+
+    private async Task LoadInitialDataAsync()
+    {
+        await RefreshAsync();
     }
 
     [RelayCommand]
-    private async Task RefreshAsync()
+    public async Task RefreshAsync()
     {
         IsLoading = true;
         StatusMessage = "正在加载缓存统计...";

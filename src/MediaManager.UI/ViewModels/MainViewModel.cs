@@ -42,6 +42,8 @@ public partial class MainViewModel : ObservableObject,
     [RelayCommand] public void NavigateSearch()        => NavigateTo<SearchViewModel>();
     [RelayCommand] public void NavigatePlaylist()      => NavigateTo<PlaylistViewModel>();
     [RelayCommand] public void NavigateDuplicate()     => NavigateTo<DuplicateViewModel>();
+    [RelayCommand] public void NavigateCache()         => NavigateTo<CacheViewModel>();
+    [RelayCommand] public void NavigatePerformance()   => NavigateTo<PerformanceViewModel>();
     [RelayCommand] public void NavigateSettings()      => NavigateTo<SettingsViewModel>();
     [RelayCommand] public void CloseDetail()      => IsDetailPanelVisible = false;
 

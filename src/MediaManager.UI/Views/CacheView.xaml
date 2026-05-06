@@ -8,134 +8,280 @@
              d:DataContext="{d:DesignInstance Type=vm:CacheViewModel}"
              Background="#0A0A0F">
     
-    <Grid Margin="20">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="24"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="24"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- 标题 -->
-        <TextBlock Grid.Row="0"
-                   Text="缓存管理"
-                   FontSize="28"
-                   FontWeight="Bold"
-                   Foreground="#F0F0F5"
-                   Margin="0,0,0,20"/>
+        <!-- 标题区域 -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="缓存管理"
+                       FontSize="28"
+                       FontWeight="Bold"
+                       Foreground="#F0F0F5"/>
+            <TextBlock Text="查看和管理内存缓存的使用情况"
+                       FontSize="14"
+                       Foreground="#606070"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
 
-        <!-- 统计卡片 -->
-        <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,20">
+        <!-- 统计卡片区域 -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+
             <!-- 缓存项数量 -->
-            <Border Background="#171722"
+            <Border Grid.Column="0"
+                    Background="#171722"
                     BorderBrush="#00FFC8"
                     BorderThickness="1"
                     CornerRadius="12"
-                    Padding="15"
-                    Margin="0,0,10,0">
+                    Padding="16"
+                    Margin="0,0,8,0">
                 <StackPanel>
                     <TextBlock Text="缓存项数量"
                                FontSize="12"
                                Foreground="#606070"
                                TextTransform="Uppercase"/>
                     <TextBlock Text="{Binding ItemCount, StringFormat={}{0:N0}}"
-                               FontSize="32"
+                               FontSize="36"
                                FontWeight="Bold"
                                Foreground="#00FFC8"/>
                 </StackPanel>
             </Border>
 
             <!-- 内存使用 -->
-            <Border Background="#171722"
+            <Border Grid.Column="1"
+                    Background="#171722"
                     BorderBrush="#FF006E"
                     BorderThickness="1"
                     CornerRadius="12"
-                    Padding="15"
-                    Margin="10,0,10,0">
+                    Padding="16"
+                    Margin="4,0,4,0">
                 <StackPanel>
                     <TextBlock Text="内存使用"
                                FontSize="12"
                                Foreground="#606070"
                                TextTransform="Uppercase"/>
                     <TextBlock Text="{Binding MemoryUsageMB, StringFormat={}{0:F2} MB}"
-                               FontSize="32"
+                               FontSize="36"
                                FontWeight="Bold"
                                Foreground="#FF006E"/>
                 </StackPanel>
             </Border>
 
             <!-- 命中次数 -->
-            <Border Background="#171722"
+            <Border Grid.Column="2"
+                    Background="#171722"
                     BorderBrush="#8338EC"
                     BorderThickness="1"
                     CornerRadius="12"
-                    Padding="15"
-                    Margin="10,0,10,0">
+                    Padding="16"
+                    Margin="4,0,4,0">
                 <StackPanel>
                     <TextBlock Text="命中次数"
                                FontSize="12"
                                Foreground="#606070"
                                TextTransform="Uppercase"/>
                     <TextBlock Text="{Binding HitCount, StringFormat={}{0:N0}}"
-                               FontSize="32"
+                               FontSize="36"
                                FontWeight="Bold"
                                Foreground="#8338EC"/>
                 </StackPanel>
             </Border>
 
             <!-- 命中率 -->
-            <Border Background="#171722"
+            <Border Grid.Column="3"
+                    Background="#171722"
                     BorderBrush="#FF9F00"
                     BorderThickness="1"
                     CornerRadius="12"
-                    Padding="15"
-                    Margin="10,0,0,0">
+                    Padding="16"
+                    Margin="8,0,0,0">
                 <StackPanel>
                     <TextBlock Text="命中率"
                                FontSize="12"
                                Foreground="#606070"
                                TextTransform="Uppercase"/>
                     <TextBlock Text="{Binding HitRate, StringFormat={}{0:F1}%}"
-                               FontSize="32"
+                               FontSize="36"
                                FontWeight="Bold"
                                Foreground="#FF9F00"/>
                 </StackPanel>
             </Border>
-        </UniformGrid>
+        </Grid>
 
-        <!-- 操作按钮 -->
-        <StackPanel Grid.Row="2"
+        <!-- 操作按钮区域 -->
+        <StackPanel Grid.Row="4"
                     Orientation="Horizontal"
-                    HorizontalAlignment="Center"
-                    Margin="0,20,0,0">
+                    HorizontalAlignment="Center">
             <Button Content="🔄 刷新统计"
                     Command="{Binding RefreshCommand}"
                     Background="#1E1E2E"
                     Foreground="#F0F0F5"
                     BorderBrush="#00FFC8"
                     BorderThickness="1"
-                    Padding="20,10"
-                    Margin="0,0,10,0"
+                    Padding="24,12"
+                    Margin="0,0,12,0"
                     Cursor="Hand"
-                    IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"/>
-            
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolToVis}, ConverterParameter=InvertToBool}"
+                    Style="{StaticResource ButtonStyle}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            Padding="{TemplateBinding Padding}"
+                                            CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+
             <Button Content="🗑️ 清空缓存"
                     Command="{Binding ClearCacheCommand}"
                     Background="#FF006E"
                     Foreground="White"
                     BorderThickness="0"
-                    Padding="20,10"
-                    Margin="10,0,0,0"
+                    Padding="24,12"
+                    Margin="12,0,0,0"
                     Cursor="Hand"
-                    IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"/>
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolToVis}, ConverterParameter=InvertToBool}"
+                    Style="{StaticResource ButtonStyle}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            Padding="{TemplateBinding Padding}"
+                                            CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
         </StackPanel>
 
-        <!-- 状态消息 -->
-        <TextBlock Grid.Row="3"
-                   Text="{Binding StatusMessage}"
-                   FontSize="12"
-                   Foreground="#606070"
-                   HorizontalAlignment="Center"
-                   Margin="0,20,0,0"/>
+        <!-- 加载状态指示器 -->
+        <Border Grid.Row="6"
+                Grid.RowSpan="2"
+                Background="#171722"
+                BorderBrush="#00FFC8"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="24"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Grid>
+                    <Ellipse Width="32" Height="32"
+                             Stroke="#00FFC8"
+                             StrokeThickness="3"
+                             Opacity="0.3"/>
+                    <Ellipse Width="32" Height="32"
+                             Stroke="#00FFC8"
+                             StrokeThickness="3"
+                             StrokeDashArray="3 3"
+                             StrokeDashOffset="0"
+                             StrokeEndLineCap="Round">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="LoadingRotate" Angle="0" CenterX="16" CenterY="16"/>
+                        </Ellipse.RenderTransform>
+                        <Ellipse.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation Storyboard.TargetName="LoadingRotate"
+                                                         Storyboard.TargetProperty="Angle"
+                                                         To="360"
+                                                         Duration="0:0:1"
+                                                         RepeatBehavior="Forever"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Ellipse.Triggers>
+                    </Ellipse>
+                </Grid>
+                <TextBlock Text="{Binding StatusMessage}"
+                           FontSize="14"
+                           Foreground="#F0F0F5"
+                           TextAlignment="Center"
+                           Margin="0,16,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 未命中统计 -->
+        <Border Grid.Row="6"
+                Background="#171722"
+                BorderBrush="#606070"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="24"
+                Margin="0,0,0,12"
+                Visibility="{Binding IsLoading, Converter={StaticResource InverseBoolToVis}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="未命中次数"
+                               FontSize="12"
+                               Foreground="#606070"
+                               TextTransform="Uppercase"/>
+                    <TextBlock Text="{Binding MissCount, StringFormat={}{0:N0}}"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Foreground="#A0A0B0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="状态"
+                               FontSize="12"
+                               Foreground="#606070"
+                               TextTransform="Uppercase"/>
+                    <TextBlock Text="{Binding StatusMessage}"
+                               FontSize="14"
+                               Foreground="#F0F0F5"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 提示信息 -->
+        <Border Grid.Row="6"
+                Background="#171722"
+                BorderBrush="#8338EC"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="20"
+                Visibility="{Binding IsLoading, Converter={StaticResource InverseBoolToVis}}">
+            <TextBlock Text="提示: 缓存最大内存限制为 256MB，超过时会自动清理最旧的缓存项"
+                       FontSize="13"
+                       Foreground="#606070"
+                       TextWrapping="Wrap"/>
+        </Border>
     </Grid>
 </UserControl>
