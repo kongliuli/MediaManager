@@ -1,0 +1,54 @@
+<img 
+    @ref="ImageRef"
+    class="mm-lazy-image"
+    style="background: var(--mm-bg-tertiary); border-radius: var(--mm-radius-md);"
+    @onload="HandleLoad"
+    @onerror="HandleError" />
+
+@code {
+    [Parameter] public string Src { get; set; } = "";
+    [Parameter] public string Alt { get; set; } = "";
+    [Parameter] public string BlurHash { get; set; } = "";
+    [Parameter] public int Width { get; set; } = 200;
+    [Parameter] public int Height { get; set; } = 200;
+
+    private ElementReference ImageRef;
+    private bool IsLoaded = false;
+    private bool IsInView = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await SetupIntersectionObserver();
+        }
+    }
+
+    private async Task SetupIntersectionObserver()
+    {
+        await JSRuntime.InvokeVoidAsync(
+            "setupLazyLoad",
+            ImageRef,
+            DotNetObjectReference.Create(this),
+            Width,
+            Height
+        );
+    }
+
+    [JSInvokable]
+    public void OnImageInView()
+    {
+        IsInView = true;
+        StateHasChanged();
+    }
+
+    private void HandleLoad()
+    {
+        IsLoaded = true;
+    }
+
+    private void HandleError()
+    {
+        Console.WriteLine($"Image load failed: {Src}");
+    }
+}

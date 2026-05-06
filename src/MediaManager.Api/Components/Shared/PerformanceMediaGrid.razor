@@ -1,0 +1,98 @@
+@typeparam TItem
+
+<div class="mm-performance-grid">
+    <div class="mm-grid-container" @ref="GridContainer">
+        <div class="mm-grid-skeleton" style="display: @(IsLoading ? "flex" : "none");">
+            @for (int i = 0; i < 12; i++)
+            {
+                <div class="mm-grid-skeleton-item"></div>
+            }
+        </div>
+        
+        @if (!IsLoading && Items.Any())
+        {
+            <div class="mm-grid-items">
+                @foreach (var item in DisplayItems)
+                {
+                    <div class="mm-grid-item" @onclick="() => OnItemClick(item)">
+                        <div class="mm-grid-item-thumb">
+                            <img 
+                                loading="lazy"
+                                src="@GetThumbnailUrl(item)"
+                                alt="@GetItemName(item)"
+                                class="mm-grid-item-image"
+                                @onload="() => OnImageLoaded(item)"
+                            />
+                        </div>
+                        <div class="mm-grid-item-info">
+                            <div class="mm-grid-item-name" title="@GetItemName(item)">
+                                @GetItemName(item)
+                            </div>
+                            <div class="mm-grid-item-meta">
+                                @GetItemMeta(item)
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        
+        @if (!IsLoading && !Items.Any())
+        {
+            <div class="mm-grid-empty">
+                <div class="mm-grid-empty-icon">📭</div>
+                <p>暂无内容</p>
+            </div>
+        }
+    </div>
+
+    @if (HasMoreItems)
+    {
+        <div class="mm-grid-load-more">
+            <button class="mm-btn mm-btn-primary" @onclick="LoadMore" disabled="@IsLoadingMore">
+                @if (IsLoadingMore)
+                {
+                    <span style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="spinner-border spinner-border-sm"></span>
+                        <span>加载中...</span>
+                    </span>
+                }
+                else
+                {
+                    <span>加载更多</span>
+                }
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public IList<TItem> Items { get; set; } = new List<TItem>();
+    [Parameter] public int PageSize { get; set; } = 20;
+    [Parameter] public Func<TItem, string> GetThumbnailUrl { get; set; } = _ => "";
+    [Parameter] public Func<TItem, string> GetItemName { get; set; } = _ => "";
+    [Parameter] public Func<TItem, string> GetItemMeta { get; set; } = _ => "";
+    [Parameter] public EventCallback<TItem> OnItemClick { get; set; }
+    [Parameter] public EventCallback<int> OnLoadMore { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+
+    private ElementReference GridContainer;
+    private int CurrentPage = 1;
+    private bool IsLoadingMore = false;
+
+    private IEnumerable<TItem> DisplayItems => Items.Take(CurrentPage * PageSize);
+
+    private bool HasMoreItems => Items.Count > CurrentPage * PageSize;
+
+    private async Task LoadMore()
+    {
+        IsLoadingMore = true;
+        CurrentPage++;
+        await OnLoadMore.InvokeAsync(CurrentPage);
+        IsLoadingMore = false;
+    }
+
+    private void OnImageLoaded(TItem item)
+    {
+    }
+}

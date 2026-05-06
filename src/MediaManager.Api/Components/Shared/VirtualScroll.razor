@@ -1,0 +1,76 @@
+@typeparam TItem
+
+<div class="mm-virtual-scroll" 
+     @ref="ContainerRef"
+     @onscroll="HandleScroll"
+     style="overflow-y: auto; position: relative; @Height">
+    <div class="mm-virtual-scroll-spacer" style="height: @TotalHeight"></div>
+    <div class="mm-virtual-scroll-content" style="position: absolute; top: 0; left: 0; right: 0;">
+        @foreach (var item in VisibleItems)
+        {
+            <div style="position: absolute; left: 0; right: 0; top: @GetItemTop(item);">
+                @ItemTemplate(item)
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
+    [Parameter] public IList<TItem> Items { get; set; } = new List<TItem>();
+    [Parameter] public int ItemHeight { get; set; } = 100;
+    [Parameter] public string Height { get; set; } = "500px";
+    [Parameter] public int OverscanCount { get; set; } = 2;
+
+    private ElementReference ContainerRef;
+    private int ContainerHeight;
+    private int StartIndex;
+    private int EndIndex;
+
+    private string TotalHeight => $"{Items.Count * ItemHeight}px";
+
+    private IEnumerable<TItem> VisibleItems => Items.Skip(StartIndex).Take(EndIndex - StartIndex + 1);
+
+    private string GetItemTop(TItem item)
+    {
+        var index = Items.IndexOf(item);
+        return $"{index * ItemHeight}px";
+    }
+
+    private async void HandleScroll()
+    {
+        await CalculateVisibleItems();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CalculateVisibleItems();
+        }
+    }
+
+    private async Task CalculateVisibleItems()
+    {
+        try
+        {
+            var rect = await ContainerRef.GetBoundingClientRectAsync();
+            ContainerHeight = (int)rect.Height;
+
+            var scrollTop = await GetScrollTop();
+            var visibleCount = (int)Math.Ceiling((double)ContainerHeight / ItemHeight) + OverscanCount * 2;
+
+            StartIndex = Math.Max(0, (int)Math.Floor((double)scrollTop / ItemHeight) - OverscanCount);
+            EndIndex = Math.Min(Items.Count - 1, StartIndex + visibleCount);
+
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task<double> GetScrollTop()
+    {
+        var result = await JSRuntime.InvokeAsync<double>("getScrollTop", ContainerRef);
+        return result;
+    }
+}
