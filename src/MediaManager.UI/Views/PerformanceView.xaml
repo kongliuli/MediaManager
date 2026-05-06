@@ -1,0 +1,263 @@
+<UserControl x:Class="MediaManager.UI.Views.PerformanceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:MediaManager.UI.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:PerformanceViewModel}"
+             Background="#0A0A0F">
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 标题 -->
+            <TextBlock Grid.Row="0"
+                       Text="性能监控"
+                       FontSize="28"
+                       FontWeight="Bold"
+                       Foreground="#F0F0F5"
+                       Margin="0,0,0,20"/>
+
+            <!-- 控制按钮 -->
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        Margin="0,0,0,20">
+                <Button Content="▶️ 开始监控"
+                        Command="{Binding StartMonitoringCommand}"
+                        Background="#00FFC8"
+                        Foreground="#0A0A0F"
+                        BorderThickness="0"
+                        Padding="20,10"
+                        Margin="0,0,10,0"
+                        Cursor="Hand"
+                        Visibility="{Binding IsMonitoring, Converter={StaticResource InverseVisibilityConverter}}"/>
+                
+                <Button Content="⏹️ 停止监控"
+                        Command="{Binding StopMonitoringCommand}"
+                        Background="#FF006E"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Padding="20,10"
+                        Margin="0,0,10,0"
+                        Cursor="Hand"
+                        Visibility="{Binding IsMonitoring, Converter={StaticResource VisibilityConverter}}"/>
+
+                <Button Content="🗑️ 清空缓存"
+                        Command="{Binding ClearCacheCommand}"
+                        Background="#1E1E2E"
+                        Foreground="#F0F0F5"
+                        BorderBrush="#8338EC"
+                        BorderThickness="1"
+                        Padding="20,10"
+                        Margin="10,0,10,0"
+                        Cursor="Hand"/>
+
+                <Button Content="♻️ 强制 GC"
+                        Command="{Binding ForceGarbageCollectionCommand}"
+                        Background="#1E1E2E"
+                        Foreground="#F0F0F5"
+                        BorderBrush="#FF9F00"
+                        BorderThickness="1"
+                        Padding="20,10"
+                        Margin="10,0,0,0"
+                        Cursor="Hand"/>
+
+                <TextBlock Text="{Binding MonitoringStatus}"
+                           FontSize="14"
+                           Foreground="#606070"
+                           VerticalAlignment="Center"
+                           Margin="20,0,0,0"/>
+            </StackPanel>
+
+            <!-- 系统指标 -->
+            <TextBlock Grid.Row="2"
+                       Text="系统指标"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       Foreground="#F0F0F5"
+                       Margin="0,0,0,15"/>
+
+            <UniformGrid Grid.Row="3" Columns="4" Margin="0,0,0,30">
+                <!-- CPU 使用率 -->
+                <Border Background="#171722"
+                        BorderBrush="#00FFC8"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="15"
+                        Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="CPU 使用率"
+                                   FontSize="12"
+                                   Foreground="#606070"/>
+                        <TextBlock Text="{Binding CpuUsage, StringFormat={}{0:F1}%}"
+                                   FontSize="32"
+                                   FontWeight="Bold"
+                                   Foreground="#00FFC8"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 内存使用 -->
+                <Border Background="#171722"
+                        BorderBrush="#FF006E"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="15"
+                        Margin="10,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="内存使用"
+                                   FontSize="12"
+                                   Foreground="#606070"/>
+                        <TextBlock Text="{Binding MemoryUsageMB, StringFormat={}{0:F1} MB}"
+                                   FontSize="32"
+                                   FontWeight="Bold"
+                                   Foreground="#FF006E"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 可用内存 -->
+                <Border Background="#171722"
+                        BorderBrush="#8338EC"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="15"
+                        Margin="10,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="可用内存"
+                                   FontSize="12"
+                                   Foreground="#606070"/>
+                        <TextBlock Text="{Binding AvailableMemoryMB, StringFormat={}{0:F0} MB}"
+                                   FontSize="32"
+                                   FontWeight="Bold"
+                                   Foreground="#8338EC"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 运行时间 -->
+                <Border Background="#171722"
+                        BorderBrush="#FF9F00"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="15"
+                        Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="运行时间"
+                                   FontSize="12"
+                                   Foreground="#606070"/>
+                        <TextBlock Text="{Binding Uptime, StringFormat=hh\\:mm\\:ss}"
+                                   FontSize="32"
+                                   FontWeight="Bold"
+                                   Foreground="#FF9F00"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- 缓存指标 -->
+            <TextBlock Grid.Row="4"
+                       Text="缓存指标"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       Foreground="#F0F0F5"
+                       Margin="0,0,0,15"/>
+
+            <UniformGrid Grid.Row="4" Columns="5" Margin="0,35,0,0">
+                <!-- 缓存项数量 -->
+                <Border Background="#171722"
+                        BorderBrush="#00FFC8"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="15"
+                        Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="缓存项数量"
+                                   FontSize="12"
+                                   Foreground="#606070"/>
+                        <TextBlock Text="{Binding CacheItemCount, StringFormat={}{0:N0}}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#00FFC8"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 缓存内存 -->
+                <Border Background="#171722"
+                        BorderBrush="#FF006E"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="15"
+                        Margin="10,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="缓存内存"
+                                   FontSize="12"
+                                   Foreground="#606070"/>
+                        <TextBlock Text="{Binding CacheMemoryMB, StringFormat={}{0:F2} MB}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#FF006E"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 命中率 -->
+                <Border Background="#171722"
+                        BorderBrush="#8338EC"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="15"
+                        Margin="10,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="命中率"
+                                   FontSize="12"
+                                   Foreground="#606070"/>
+                        <TextBlock Text="{Binding CacheHitRate, StringFormat={}{0:F1}%}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#8338EC"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 命中次数 -->
+                <Border Background="#171722"
+                        BorderBrush="#FF9F00"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="15"
+                        Margin="10,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="命中次数"
+                                   FontSize="12"
+                                   Foreground="#606070"/>
+                        <TextBlock Text="{Binding CacheHits, StringFormat={}{0:N0}}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#FF9F00"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 未命中次数 -->
+                <Border Background="#171722"
+                        BorderBrush="#606070"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="15"
+                        Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="未命中次数"
+                                   FontSize="12"
+                                   Foreground="#606070"/>
+                        <TextBlock Text="{Binding CacheMisses, StringFormat={}{0:N0}}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#A0A0B0"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>
